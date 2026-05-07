@@ -3,6 +3,14 @@
 > **Visual theme builder for [EmuLnk](https://github.com/EmuLnk)-compatible emulators.**  
 > Design HUD overlays, wire up live memory data, and export ready-to-install theme packages — all from a single HTML file, no install required.
 
+<div align="center">
+
+**[▶ Launch Theem-r in your browser](https://elbardacus.github.io/theem-r/)**
+
+*No install · No login · Works offline after first load*
+
+</div>
+
 ---
 
 > 🤖 **AI-assisted project** — Theem-r was designed and built with the help of Claude (Anthropic).  
@@ -23,10 +31,14 @@ You drag widgets onto a phone-shaped canvas, connect them to game data, and expo
 
 ## Quick Start
 
-**No install. No server. Just open the file.**
+### Option A — Run it online (easiest)
+**[Open Theem-r →](https://elbardacus.github.io/theem-r/)** — runs entirely in your browser, nothing to install.
 
+### Option B — Run it locally
 1. Download [`index.html`](index.html) from this repo
 2. Open it in any modern browser (Chrome / Firefox / Edge)
+
+### Then
 3. Pick a console and type a Game ID in the right-side panel
 4. Add widgets from the **Design** tab on the left
 5. Click **Export ZIP** in the header when you're happy with the layout
