@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>EmuLnk Theme Builder</title>
+<style>
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:#111;color:#ddd;overflow:hidden}
+input,select,textarea,button{font:inherit;color:inherit;background:none}
+button{cursor:pointer}
+
+/* ── Shell ── */
+#app{display:flex;flex-direction:column;height:100vh}
+#hdr{display:flex;align-items:center;gap:8px;padding:0 14px;height:46px;flex-shrink:0;background:linear-gradient(90deg,#0a0500,#110800,#0a0500);border-bottom:2px solid #FF8C00;box-shadow:0 2px 20px rgba(255,140,0,.15)}
+.logo{font-size:15px;font-weight:900;color:#FF8C00;letter-spacing:2px;white-space:nowrap}
+.logo span{color:#fff}
+#hdr-space{flex:1}
+.hdr-btn{padding:5px 12px;border-radius:4px;border:none;font-size:12px;font-weight:700;letter-spacing:1px;transition:filter .15s}
+.hdr-btn:hover{filter:brightness(1.2)}
+.hdr-btn.pri{background:linear-gradient(135deg,#FF8C00,#FF6A00);color:#000;box-shadow:0 0 8px rgba(255,140,0,.35)}
+.hdr-btn.sec{background:#222;color:#aaa;border:1px solid #333}
+#body{display:flex;flex:1;min-height:0}
+
+/* ── Left sidebar ── */
+#lside{width:210px;flex-shrink:0;background:#181818;border-right:1px solid #2a2a2a;display:flex;flex-direction:column;overflow:hidden}
+.tab-bar{display:flex;flex-shrink:0;border-bottom:1px solid #2a2a2a}
+.tab{flex:1;padding:8px 4px;text-align:center;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#555;cursor:pointer;border:none;background:none;transition:color .15s,border-color .15s;border-bottom:2px solid transparent}
+.tab.active{color:#FF8C00;border-bottom-color:#FF8C00}
+.tab-content{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.tab-content.active{display:flex}
+
+/* Design tab */
+.side-sec{padding:10px;border-bottom:1px solid #1e1e1e;flex-shrink:0}
+.side-ttl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:8px}
+.pal-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.pal-item{background:#202020;border:1px solid #2d2d2d;border-radius:4px;padding:7px 2px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;user-select:none}
+.pal-item:hover{background:#2a2a2a;border-color:#FF8C00}
+.pi-icon{font-size:16px;display:block;color:#FF8C00}
+.pi-lbl{font-size:8px;color:#777;display:block;margin-top:2px;letter-spacing:.5px}
+.dp-list{flex:1;overflow-y:auto;padding:0 4px 8px}
+.dp-item{padding:4px 8px;border-radius:3px;cursor:pointer;color:#888;font-size:10px;transition:background .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.dp-item:hover{background:#222;color:#fff}
+.dp-item.pinned{color:#FF8C00}
+.dp-badge{font-size:7px;background:#2a1a00;color:#FF8C00;border-radius:2px;padding:1px 4px;flex-shrink:0}
+.preset-row{display:flex;flex-wrap:wrap;gap:4px}
+.preset-btn{padding:3px 8px;font-size:10px;background:#1e1e1e;border:1px solid #2d2d2d;border-radius:3px;cursor:pointer;transition:border-color .15s}
+.preset-btn:hover{border-color:#FF8C00}
+
+/* Scanner tab */
+.scan-conn{padding:10px;border-bottom:1px solid #1e1e1e;flex-shrink:0}
+.conn-row{display:flex;gap:4px;align-items:center}
+.conn-ip{flex:1;background:#111;border:1px solid #333;border-radius:3px;padding:4px 8px;font-size:11px}
+.conn-ip:focus{outline:none;border-color:#FF8C00}
+.conn-port{width:54px;background:#111;border:1px solid #333;border-radius:3px;padding:4px 6px;font-size:11px}
+.conn-port:focus{outline:none;border-color:#FF8C00}
+.conn-btn{padding:4px 10px;background:#222;border:1px solid #444;border-radius:3px;font-size:11px;font-weight:700;white-space:nowrap}
+.conn-btn:hover{border-color:#FF8C00}
+.conn-status{margin-top:6px;font-size:10px;display:flex;align-items:center;gap:5px}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#444}
+.conn-dot.ok{background:#4DFF91;box-shadow:0 0 5px #4DFF91}
+.conn-dot.err{background:#FF4444}
+.adb-hint{margin-top:5px;font-size:9px;color:#444;line-height:1.4}
+
+.scan-ctrl{padding:10px;border-bottom:1px solid #1e1e1e;flex-shrink:0}
+.scan-row{display:flex;gap:4px;margin-bottom:6px}
+.scan-inp{flex:1;background:#111;border:1px solid #333;border-radius:3px;padding:4px 7px;font-size:12px}
+.scan-inp:focus{outline:none;border-color:#FF8C00}
+.type-sel{width:62px;background:#111;border:1px solid #333;border-radius:3px;padding:4px 4px;font-size:11px}
+.scan-btn{padding:4px 10px;background:#FF8C00;color:#000;border:none;border-radius:3px;font-size:11px;font-weight:700}
+.scan-btn:disabled{background:#333;color:#666;cursor:default}
+.filter-row{display:flex;gap:3px;flex-wrap:wrap}
+.f-btn{flex:1;padding:4px 2px;font-size:10px;background:#1e1e1e;border:1px solid #2d2d2d;border-radius:3px;text-align:center;cursor:pointer;transition:border-color .15s;white-space:nowrap}
+.f-btn:hover:not(:disabled){border-color:#FF8C00}
+.f-btn:disabled{color:#444;cursor:default}
+.scan-count{font-size:10px;color:#666;margin-top:6px}
+
+.scan-results{flex:1;overflow-y:auto;padding:4px}
+.res-item{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:3px;border-bottom:1px solid #1a1a1a;cursor:default}
+.res-item:hover{background:#1e1e1e}
+.res-addr{font-size:10px;color:#888;font-family:monospace;flex:1;white-space:nowrap}
+.res-val{font-size:11px;font-weight:700;color:#fff;width:60px;text-align:right;white-space:nowrap}
+.res-pin{padding:2px 6px;font-size:9px;background:#1a2a00;border:1px solid #3a5a00;border-radius:2px;color:#8DF500;cursor:pointer;white-space:nowrap}
+.res-pin:hover{background:#2a3a00}
+.res-write{padding:2px 6px;font-size:9px;background:#1a1020;border:1px solid #3a2050;border-radius:2px;color:#BB86FC;cursor:pointer;white-space:nowrap}
+.res-write:hover{background:#2a1a30}
+.res-page{display:flex;justify-content:space-between;padding:6px 4px;font-size:10px;color:#555;flex-shrink:0}
+.res-page button{background:none;border:1px solid #333;border-radius:3px;padding:2px 8px;color:#888;cursor:pointer}
+.res-page button:hover{border-color:#FF8C00}
+
+.watch-sec{padding:10px;border-top:1px solid #1e1e1e;flex-shrink:0}
+.watch-item{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10px;border-bottom:1px solid #1a1a1a}
+.watch-name{flex:1;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.watch-val{font-weight:700;color:#fff;font-size:11px;min-width:50px;text-align:right}
+.watch-rm{color:#555;cursor:pointer;font-size:12px;padding:0 2px}
+.watch-rm:hover{color:#ff6b6b}
+
+.edit-sec{padding:10px;border-top:1px solid #1e1e1e;flex-shrink:0}
+.edit-row{display:flex;gap:4px;margin-bottom:4px}
+.edit-inp{flex:1;background:#111;border:1px solid #333;border-radius:3px;padding:4px 7px;font-size:11px;font-family:monospace}
+.edit-inp:focus{outline:none;border-color:#BB86FC}
+.edit-btn{padding:4px 8px;font-size:10px;background:#1a1020;border:1px solid #3a2050;border-radius:3px;color:#BB86FC;cursor:pointer}
+.edit-btn:hover{background:#2a1a30}
+.edit-result{font-size:10px;color:#888;min-height:14px}
+
+/* Neighbour analyser */
+.nbr-table{width:100%;font-size:9px;border-collapse:collapse;margin-top:6px}
+.nbr-table th{color:#555;text-align:right;padding:2px 4px;border-bottom:1px solid #222}
+.nbr-table td{color:#ccc;text-align:right;padding:2px 4px;border-bottom:1px solid #1a1a1a;font-family:monospace}
+.nbr-table td:first-child{color:#666;text-align:left}
+.nbr-table tr:hover td{background:#1e1e1e}
+
+/* ── Known addresses panel ── */
+.db-sec{padding:8px 10px;border-bottom:1px solid #1e1e1e;flex-shrink:0}
+.db-hdr{display:flex;align-items:center;gap:4px;margin-bottom:0}
+.db-toggle{background:none;border:none;color:#555;font-size:12px;cursor:pointer;padding:0 3px;line-height:1;transition:color .15s}
+.db-toggle:hover{color:#FF8C00}
+.db-body{overflow:hidden;transition:max-height .25s ease}
+.db-body.open{max-height:320px}
+.db-body.closed{max-height:0}
+.ka-list{overflow-y:auto;max-height:200px}
+.ka-item{padding:6px 6px 5px;border-bottom:1px solid #181818;transition:background .1s}
+.ka-item:hover{background:#1c1c1c}
+.ka-item.ka-match{background:#061306;border-left:2px solid #4DFF91;padding-left:4px}
+.ka-top{display:flex;align-items:center;gap:5px}
+.ka-label{font-size:11px;color:#d8d8d8;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ka-badge{font-size:7px;padding:1px 4px;border-radius:2px;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase}
+.ka-badge.confirmed{background:#162600;color:#6DC300;border:1px solid #2a4a00}
+.ka-badge.scan{background:#261600;color:#FF8C00;border:1px solid #4a2a00}
+.ka-badge.type{background:#0a1625;color:#4D9EFF;border:1px solid #153050}
+.ka-addr-txt{font-size:9px;font-family:'Courier New',monospace;color:#4DFF91;margin-top:2px;letter-spacing:.5px}
+.ka-hint{font-size:9px;color:#555;line-height:1.4;margin-top:3px}
+.ka-btns{display:flex;gap:3px;margin-top:5px;align-items:center}
+.ka-btn{padding:2px 7px;font-size:9px;background:#111;border:1px solid #2d2d2d;border-radius:3px;color:#888;cursor:pointer;white-space:nowrap;transition:border-color .1s,color .1s}
+.ka-btn:hover{border-color:#FF8C00;color:#FF8C00}
+.ka-chk{padding:2px 10px;font-size:9px;background:#0a1e0a;border:1px solid #2a5a2a;border-radius:3px;color:#4DFF91;cursor:pointer;font-weight:700;white-space:nowrap;transition:background .1s}
+.ka-chk:hover{background:#132513;border-color:#4DFF91}
+.ka-live{font-size:10px;color:#4DFF91;font-weight:700;margin-left:auto;white-space:nowrap}
+.ra-row{display:flex;gap:4px;margin-top:7px;padding-top:7px;border-top:1px solid #1e1e1e;align-items:center}
+.ra-inp{flex:1;background:#111;border:1px solid #2d2d2d;border-radius:3px;padding:3px 6px;font-size:9px;color:#aaa;min-width:0}
+.ra-inp:focus{outline:none;border-color:#4DAAFF}
+.ra-btn{padding:3px 9px;font-size:9px;background:linear-gradient(135deg,#0a1428,#0d1e3a);border:1px solid #1a3560;border-radius:3px;color:#4DAAFF;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s;flex-shrink:0}
+.ra-btn:hover{background:linear-gradient(135deg,#0d1a30,#1a3a6a);border-color:#4DAAFF}
+.ra-msg{font-size:9px;color:#555;margin-top:3px;min-height:13px}
+/* on-device mode badge */
+.on-device-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:9px;background:linear-gradient(90deg,#061a06,#0a2a0a);border:1px solid #2a5a2a;border-radius:10px;color:#4DFF91;letter-spacing:.5px;margin-top:5px}
+/* cross-ref in results */
+.res-known{font-size:8px;background:#061306;color:#4DFF91;border:1px solid #1a4a1a;border-radius:2px;padding:1px 5px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px}
+.res-chk{padding:2px 7px;font-size:10px;background:#0a1e0a;border:1px solid #2a5a2a;border-radius:2px;color:#4DFF91;cursor:pointer;font-weight:700;flex-shrink:0;transition:background .1s}
+.res-chk:hover{background:#132513;border-color:#4DFF91}
+
+/* ── Canvas area ── */
+#carea{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;background:#141414;overflow:hidden;position:relative}
+#cwrap{position:relative}
+#cbezel{position:absolute;inset:-10px;border:10px solid #2a2a2a;border-radius:28px;pointer-events:none;z-index:10;box-shadow:0 0 0 1px #333,0 8px 40px rgba(0,0,0,.7)}
+#canvas{width:360px;height:640px;background:#0c0c0c;position:relative;overflow:hidden;transform-origin:top left}
+.cv-widget{position:absolute;cursor:move;user-select:none;-webkit-user-select:none}
+.cv-widget.selected{outline:2px dashed #FF8C00;z-index:50}
+.rh{position:absolute;bottom:-5px;right:-5px;width:11px;height:11px;background:#FF8C00;border-radius:2px;cursor:se-resize;z-index:51}
+#scale-hint{position:absolute;bottom:8px;right:8px;font-size:10px;color:#333;pointer-events:none}
+
+/* widget preview styles (canvas) */
+.wg-bar-lbl{font-size:9px;letter-spacing:1px;color:#777;text-transform:uppercase;display:flex;justify-content:space-between;margin-bottom:2px}
+.wg-bar-trk{border-radius:2px;overflow:hidden;background:#1e1e1e}
+.wg-bar-fill{height:100%;border-radius:2px;transition:width .15s}
+.wg-num-lbl{font-size:9px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
+.wg-num-val{font-weight:900;line-height:1.1}
+.wg-stars{display:flex;gap:3px}
+.wg-star{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);transition:background .15s}
+.wg-map{border-radius:50%;background:#0a0f0a;display:block}
+/* scanner widget preview */
+.wg-scanner{background:#0a0a10;border:1px solid #2a2a3a;border-radius:4px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.wg-sc-title{font-size:8px;letter-spacing:2px;color:#555;text-transform:uppercase}
+.wg-sc-row{display:flex;gap:3px}
+.wg-sc-inp{flex:1;background:#111;border:1px solid #2a2a3a;border-radius:2px;padding:2px 5px;font-size:10px}
+.wg-sc-btn{padding:2px 6px;background:#1a1a2a;border:1px solid #3a3a5a;border-radius:2px;font-size:9px;color:#7a7aaa;cursor:pointer}
+.wg-sc-res{font-size:9px;color:#666;height:40px;overflow-y:auto}
+/* editor widget preview */
+.wg-editor{background:#0a0a0a;border:1px solid #3a2050;border-radius:4px;padding:6px;display:flex;flex-direction:column;gap:4px}
+.wg-ed-title{font-size:8px;letter-spacing:2px;color:#555;text-transform:uppercase}
+.wg-ed-val{font-size:18px;font-weight:900;color:#BB86FC;line-height:1}
+.wg-ed-addr{font-size:8px;color:#555;font-family:monospace}
+
+/* ── Right sidebar ── */
+#rside{width:220px;flex-shrink:0;background:#181818;border-left:1px solid #2a2a2a;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.prop-sec{display:flex;flex-direction:column;gap:5px}
+.prop-ttl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:2px}
+.prop-row{display:flex;flex-direction:column;gap:2px}
+.prop-lbl{font-size:10px;color:#666}
+.prop-inp{background:#111;border:1px solid #2d2d2d;border-radius:3px;padding:4px 7px;font-size:12px;color:#eee;width:100%}
+.prop-inp:focus{outline:none;border-color:#FF8C00}
+.prop-inp[type=color]{padding:2px;height:28px;cursor:pointer}
+.prop-sel{background:#111;border:1px solid #2d2d2d;border-radius:3px;padding:4px 7px;font-size:12px;color:#eee;width:100%}
+.prop-2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.prop-sep{border:none;border-top:1px solid #1e1e1e;margin:2px 0}
+.del-btn{margin-top:4px;padding:5px;background:#1a0808;border:1px solid #5a1a1a;border-radius:3px;color:#ff6b6b;font-size:11px;width:100%;cursor:pointer}
+.del-btn:hover{background:#2a1010}
+.no-sel{color:#444;font-size:11px;text-align:center;margin-top:20px;line-height:1.7}
+.game-lookup{margin-top:3px;font-size:10px;color:#4DFF91;min-height:14px}
+
+/* ── Pin modal ── */
+#pin-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200}
+#pin-modal.show{display:flex}
+.pin-box{background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:20px;width:280px;display:flex;flex-direction:column;gap:10px}
+.pin-title{font-size:13px;font-weight:700;color:#FF8C00}
+.pin-addr{font-size:10px;font-family:monospace;color:#888}
+.pin-inp{background:#111;border:1px solid #333;border-radius:3px;padding:6px 10px;font-size:12px;color:#eee;width:100%}
+.pin-inp:focus{outline:none;border-color:#FF8C00}
+.pin-row{display:flex;gap:6px}
+.pin-btn{flex:1;padding:7px;border:none;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+.pin-btn.ok{background:#FF8C00;color:#000}
+.pin-btn.cancel{background:#222;color:#888;border:1px solid #333}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;border-radius:6px;padding:7px 16px;font-size:12px;color:#fff;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1000;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="hdr">
+    <div class="logo">EMULNK <span>THEME BUILDER</span></div>
+    <div id="hdr-space"></div>
+    <button class="hdr-btn sec" onclick="importTheme()">⬆ Import</button>
+    <button class="hdr-btn sec" onclick="clearCanvas()">New</button>
+    <button class="hdr-btn pri" onclick="exportTheme()">⬇ Export ZIP</button>
+  </header>
+
+  <div id="body">
+
+    <!-- ── Left sidebar ── -->
+    <div id="lside">
+      <div class="tab-bar">
+        <button class="tab active" id="tab-design" onclick="switchTab('design')">Design</button>
+        <button class="tab"        id="tab-scanner" onclick="switchTab('scanner')">Scanner</button>
+      </div>
+
+      <!-- Design tab -->
+      <div class="tab-content active" id="tc-design">
+        <div class="side-sec">
+          <div class="side-ttl">Add Widget</div>
+          <div class="pal-grid" id="palette"></div>
+        </div>
+        <div class="side-sec">
+          <div class="side-ttl">Profile Presets</div>
+          <div class="preset-row" id="presets"></div>
+        </div>
+        <div class="side-sec" style="border-bottom:none;flex-shrink:0">
+          <div class="side-ttl">Data Points <span style="color:#444;font-size:8px">click to bind to selection</span></div>
+        </div>
+        <div class="dp-list" id="dp-list"><span style="color:#333;font-size:10px;padding:4px 8px;display:block">Load a profile or use Scanner to discover addresses.</span></div>
+      </div>
+
+      <!-- Scanner tab -->
+      <div class="tab-content" id="tc-scanner">
+
+        <!-- Connection -->
+        <div class="scan-conn">
+          <div class="side-ttl" style="margin-bottom:6px">Emulator Connection</div>
+          <div class="conn-row">
+            <input class="conn-ip" id="sc-ip" value="192.168.1.100" placeholder="device IP">
+            <input class="conn-port" id="sc-port" value="55356" placeholder="port">
+            <button class="conn-btn" onclick="scConnect()">Test</button>
+          </div>
+          <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
+          <div class="adb-hint">On-device: opens at <code>127.0.0.1</code> automatically. Desktop: <code>adb forward tcp:55356 tcp:55356</code> then use <code>127.0.0.1</code>.</div>
+        </div>
+
+        <!-- Scan controls -->
+        <div class="scan-ctrl">
+          <div class="scan-row">
+            <input  class="scan-inp" id="sc-val" placeholder="value to scan" type="number">
+            <select class="type-sel" id="sc-type">
+              <option value="4">u32</option>
+              <option value="2">u16</option>
+              <option value="1">u8</option>
+              <option value="f">float</option>
+            </select>
+            <button class="scan-btn" id="sc-scan-btn" onclick="scScan()">Scan</button>
+          </div>
+          <div class="filter-row">
+            <button class="f-btn" id="f-val"  onclick="scFilter()"   disabled>= Value</button>
+            <button class="f-btn" id="f-chg"  onclick="scChanged()"  disabled>Changed</button>
+            <button class="f-btn" id="f-unch" onclick="scUnchanged()" disabled>Same</button>
+            <button class="f-btn" id="f-rst"  onclick="scReset()">Reset</button>
+          </div>
+          <div class="scan-count" id="sc-count">—</div>
+        </div>
+
+        <!-- Known Addresses DB -->
+        <div class="db-sec" id="db-sec">
+          <div class="db-hdr">
+            <div class="side-ttl" style="flex:1;margin-bottom:0">Known Addresses</div>
+            <button class="db-toggle" id="db-toggle" onclick="toggleDB()" title="Collapse">▲</button>
+          </div>
+          <div class="db-body open" id="db-body">
+            <div class="ka-list" id="ka-list"><span style="color:#444;font-size:10px;padding:4px 0;display:block">Set game serial or connect to populate.</span></div>
+
+            <!-- Suggested fields by genre -->
+            <div id="sf-sec" style="display:none;margin-top:8px;padding-top:7px;border-top:1px solid #1e1e1e">
+              <div class="side-ttl" style="margin-bottom:5px">Suggested Fields <span id="sf-genre" style="color:#FF8C00;text-transform:none;letter-spacing:0;font-size:9px"></span></div>
+              <div id="sf-chips" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+            </div>
+
+            <!-- Game Art (zero-config — uses libretro-thumbnails public CDN) -->
+            <div id="art-sec" style="display:none;margin-top:8px;padding-top:7px;border-top:1px solid #1e1e1e">
+              <div class="side-ttl" style="margin-bottom:5px">Game Art <span style="color:#444;text-transform:none;letter-spacing:0;font-size:9px">· no login needed</span></div>
+              <div id="art-thumbs" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+              <div class="ra-msg" id="art-msg"></div>
+            </div>
+
+            <!-- Advanced API integrations (collapsed by default) -->
+            <div style="margin-top:8px;padding-top:7px;border-top:1px solid #1e1e1e">
+              <button class="db-toggle" id="adv-toggle" onclick="toggleAdv()" style="background:none;border:none;color:#666;cursor:pointer;font-size:10px;padding:0;letter-spacing:1px">▶ ADVANCED · API integrations (optional)</button>
+              <div id="adv-body" style="display:none;margin-top:6px">
+                <div style="font-size:9px;color:#444;line-height:1.4;margin-bottom:5px">Optional accounts for richer data — RA pulls memory addresses from achievements, SteamGridDB pulls hero/banner art.</div>
+                <!-- RetroAchievements -->
+                <div class="ra-row">
+                  <input class="ra-inp" id="ra-uid" placeholder="RA username" title="RetroAchievements username">
+                  <input class="ra-inp" id="ra-key" placeholder="RA API key" title="From retroachievements.org → Settings → API Key" style="max-width:74px">
+                  <input class="ra-inp" id="ra-gid" placeholder="RA ID" title="Game ID from retroachievements.org game page URL" style="max-width:52px" type="number">
+                  <button class="ra-btn" onclick="fetchRA()" title="Fetch achievement memory addresses from RetroAchievements">⚡RA</button>
+                </div>
+                <div class="ra-msg" id="ra-msg"></div>
+                <!-- SteamGridDB hero/grid art -->
+                <div class="ra-row" style="margin-top:5px">
+                  <input class="ra-inp" id="sg-key" placeholder="SteamGridDB API key (optional)" title="Free key from steamgriddb.com → Profile → API" style="flex:1">
+                  <button class="ra-btn" onclick="fetchSGDB()" title="Fetch additional hero/banner art for the current game" style="color:#FFB347;border-color:#5a3a1a">⚡SGDB</button>
+                </div>
+                <div class="ra-msg" id="sg-msg"></div>
+                <div id="sg-thumbs" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="scan-results" id="sc-results"><span style="color:#333;font-size:10px;padding:8px;display:block;text-align:center">Run a scan to see results.</span></div>
+        <div class="res-page" id="sc-pager" style="display:none">
+          <button onclick="scPage(-1)">◀ Prev</button>
+          <span id="sc-page-lbl">1 / 1</span>
+          <button onclick="scPage(1)">Next ▶</button>
+        </div>
+
+        <!-- Live watch -->
+        <div class="watch-sec">
+          <div class="side-ttl" style="margin-bottom:5px">Live Watch <span style="color:#333;font-size:8px">pinned addresses</span></div>
+          <div id="watch-list"><span style="color:#333;font-size:10px">Pin an address from results to watch it live.</span></div>
+        </div>
+
+        <!-- Direct editor -->
+        <div class="edit-sec">
+          <div class="side-ttl" style="margin-bottom:6px">Direct Editor</div>
+          <div class="edit-row">
+            <input class="edit-inp" id="ed-addr" placeholder="0x01E6384C" style="width:120px">
+            <select class="type-sel" id="ed-type" style="width:58px">
+              <option value="4">u32</option><option value="2">u16</option><option value="1">u8</option><option value="f">float</option>
+            </select>
+            <button class="edit-btn" onclick="edRead()">Read</button>
+          </div>
+          <div class="edit-row">
+            <input class="edit-inp" id="ed-val" placeholder="new value">
+            <button class="edit-btn" onclick="edWrite()" style="background:#1a200a;border-color:#4a6010;color:#8DF500">Write</button>
+          </div>
+          <div class="edit-result" id="ed-result"></div>
+          <!-- Neighbour analyser -->
+          <div style="margin-top:6px">
+            <button class="f-btn" onclick="scNeighbours()" style="width:100%;font-size:9px">Analyse Neighbours (±32 bytes)</button>
+          </div>
+          <div id="nbr-area"></div>
+        </div>
+
+      </div><!-- /tc-scanner -->
+    </div><!-- /lside -->
+
+    <!-- ── Canvas ── -->
+    <div id="carea">
+      <div id="cwrap">
+        <div id="cbezel"></div>
+        <div id="canvas" onclick="canvasClick(event)"></div>
+      </div>
+      <div id="scale-hint"></div>
+    </div>
+
+    <!-- ── Right sidebar ── -->
+    <div id="rside">
+      <div class="prop-sec">
+        <div class="prop-ttl">Theme Info</div>
+        <div class="prop-row">
+          <label class="prop-lbl">Game ID</label>
+          <input class="prop-inp" id="m-gameid" placeholder="e.g. SUPER METROID or SLUS-20946" oninput="onGameId(this.value)">
+          <div class="game-lookup" id="game-lookup"></div>
+          <!-- Format hint updates when a console is selected -->
+          <div id="gameid-hint" style="font-size:9px;color:#555;margin-top:2px"></div>
+        </div>
+        <div class="prop-row"><label class="prop-lbl">Theme ID</label><input class="prop-inp" id="m-id" placeholder="MyTheme" oninput="state.meta.id=this.value"></div>
+        <div class="prop-row"><label class="prop-lbl">Display Name</label><input class="prop-inp" id="m-name" placeholder="My HUD" oninput="state.meta.name=this.value"></div>
+        <div class="prop-row"><label class="prop-lbl">Console</label>
+          <!-- Options are generated from CONSOLE_MAP by buildConsoleSelect() on init -->
+          <select class="prop-sel" id="m-con" onchange="onConsoleChange(this.value)"></select>
+        </div>
+        <div class="prop-row"><label class="prop-lbl">Profile ID</label><input class="prop-inp" id="m-prof" placeholder="e.g. SM or GTASA" oninput="state.meta.profileId=this.value"></div>
+        <div class="prop-row"><label class="prop-lbl">Author</label><input class="prop-inp" id="m-auth" placeholder="your name" oninput="state.meta.author=this.value"></div>
+        <div class="prop-row"><label class="prop-lbl">Description</label><input class="prop-inp" id="m-desc" placeholder="short description" oninput="state.meta.description=this.value"></div>
+      </div>
+      <hr class="prop-sep">
+      <div id="widget-props"><p class="no-sel">← Add a widget from the Design tab, then click it to edit its properties.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Pin modal -->
+<div id="pin-modal">
+  <div class="pin-box">
+    <div class="pin-title">Pin Address to Profile</div>
+    <div class="pin-addr" id="pin-addr-lbl"></div>
+    <input class="pin-inp" id="pin-id"   placeholder="data point id  (e.g. gilda)">
+    <input class="pin-inp" id="pin-name" placeholder="display label  (e.g. Gilda Currency)">
+    <select class="prop-sel" id="pin-type">
+      <option value="u32_le">u32 — unsigned 32-bit int</option>
+      <option value="u16_le">u16 — unsigned 16-bit int</option>
+      <option value="u8">u8 — unsigned byte</option>
+      <option value="float_le">float — 32-bit float</option>
+      <option value="s32_le">s32 — signed 32-bit int</option>
+    </select>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#888">
+      <input type="checkbox" id="pin-widget" checked> <label for="pin-widget">Also add a widget to canvas</label>
+    </div>
+    <div class="pin-row">
+      <button class="pin-btn cancel" onclick="closePinModal()">Cancel</button>
+      <button class="pin-btn ok" onclick="confirmPin()">Add to Profile</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ── Self-contained ZIP builder — no external dependencies ──────────────────
+ * Produces valid .zip files using STORE (uncompressed) entries.
+ * Sufficient for the small JSON / HTML / text files this tool exports.
+ * Compatible with every zip tool and with Android's built-in extractor.
+ *
+ * Usage:  const blob = zipBlob([{name:'dir/file.txt', data:'hello'}]);
+ *         // data may be a string or Uint8Array
+ */
+const _ENC = new TextEncoder();
+
+/* CRC-32 lookup table, computed once at load */
+const _CRC_T = (()=>{
+  const t = new Uint32Array(256);
+  for (let i=0;i<256;i++){
+    let c=i;
+    for (let j=0;j<8;j++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[i]=c;
+  }
+  return t;
+})();
+
+function _crc32(bytes){
+  let c=0xFFFFFFFF;
+  for (let i=0;i<bytes.length;i++) c = _CRC_T[(c^bytes[i])&0xFF] ^ (c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+
+function _u16(v,buf,o){ buf[o]=v&0xFF; buf[o+1]=(v>>8)&0xFF; }
+function _u32(v,buf,o){ buf[o]=v&0xFF; buf[o+1]=(v>>8)&0xFF; buf[o+2]=(v>>16)&0xFF; buf[o+3]=(v>>24)&0xFF; }
+
+/**
+ * Build a ZIP blob from an array of file descriptors.
+ * @param {Array<{name:string, data:string|Uint8Array}>} files
+ * @returns {Blob}  application/zip
+ */
+function zipBlob(files){
+  const parts  = [];   /* local file headers + data */
+  const central= [];   /* central directory entries */
+  let   offset = 0;
+
+  for (const f of files){
+    const name  = _ENC.encode(f.name);
+    const data  = typeof f.data === 'string' ? _ENC.encode(f.data) : f.data;
+    const crc   = _crc32(data);
+    const dlen  = data.length;
+
+    /* Local file header (30 bytes + filename) */
+    const lh = new Uint8Array(30 + name.length);
+    _u32(0x04034b50, lh, 0);   /* signature */
+    _u16(20,         lh, 4);   /* version needed: 2.0 */
+    _u16(0,          lh, 8);   /* compression: STORE */
+    _u32(crc,        lh, 14);
+    _u32(dlen,       lh, 18);  /* compressed size */
+    _u32(dlen,       lh, 22);  /* uncompressed size */
+    _u16(name.length,lh, 26);
+    lh.set(name, 30);
+
+    /* Central directory entry (46 bytes + filename) */
+    const cd = new Uint8Array(46 + name.length);
+    _u32(0x02014b50, cd, 0);   /* signature */
+    _u16(20,         cd, 4);   /* made-by version */
+    _u16(20,         cd, 6);   /* version needed */
+    _u16(0,          cd, 10);  /* compression: STORE */
+    _u32(crc,        cd, 16);
+    _u32(dlen,       cd, 20);
+    _u32(dlen,       cd, 24);
+    _u16(name.length,cd, 28);
+    _u32(offset,     cd, 42);  /* local header offset */
+    cd.set(name, 46);
+
+    parts.push(lh, data);
+    central.push(cd);
+    offset += lh.length + dlen;
+  }
+
+  /* Central directory total size */
+  let cdLen = 0;
+  central.forEach(c => cdLen += c.length);
+
+  /* End-of-central-directory record (22 bytes) */
+  const eocd = new Uint8Array(22);
+  _u32(0x06054b50,   eocd, 0);
+  _u16(files.length, eocd, 8);
+  _u16(files.length, eocd, 10);
+  _u32(cdLen,        eocd, 12);
+  _u32(offset,       eocd, 16);
+
+  return new Blob([...parts, ...central, eocd], {type:'application/zip'});
+}
+
+/**
+ * EmuLnk Theme Builder
+ * ====================
+ * Single-file HTML/CSS/JS app for building EmuLnk companion themes visually.
+ *
+ * Architecture overview
+ * ─────────────────────
+ * Left panel — two tabs:
+ *   Design  : widget palette, profile presets, data point list
+ *   Scanner : live connection to the HTTP scanner (port 55356 on the device)
+ *             Known Addresses panel with cross-reference + RetroAchievements fetch
+ *             Direct editor + neighbour analyser
+ *
+ * Canvas (centre) : 360×640 viewport scaled to fit window.
+ *   Widgets are absolutely-positioned divs; drag/resize via mouse/touch.
+ *   A demo loop animates widgets with synthetic values for offline preview.
+ *
+ * Right panel : per-widget property inspector + theme metadata.
+ *
+ * Export flow:
+ *   Build → ZIP containing:
+ *     theme.json  — EmuLnk theme manifest
+ *     index.html  — generated HUD page (runs inside EmuLnk WebView)
+ *     profile.json — memory address profile (if addresses were pinned)
+ *     README.txt
+ *
+ * On-device mode:
+ *   If opened in a browser on the emulator device itself, the page
+ *   tries 127.0.0.1:55356 at startup and auto-connects if found.
+ *   No ADB forwarding needed in this case.
+ *
+ * Known Addresses DB:
+ *   KNOWN_ADDRS maps disc serial → array of { addr, id, label, type, hint, min, max }
+ *   addr:null = must be discovered via scanning
+ *   addr:0xNNN = confirmed address, read directly
+ *   min/max = expected value range — scan results matching both address AND
+ *   range show a green ✓ button for one-click confirm-and-pin.
+ *
+ * RetroAchievements integration (optional):
+ *   Enter RA username + API key + game ID → fetches achievement data →
+ *   parses MemAddr condition strings → adds discovered EE-space addresses
+ *   to the known list so they appear in the cross-reference panel.
+ */
+
+/* ═══════════════════════════════════════════════════════
+   CONSTANTS & STATE
+═══════════════════════════════════════════════════════ */
+const CW = 360, CH = 640;   /* canvas dimensions match EmuLnk's phone viewport */
+
+/* Known game serials → metadata auto-fill.
+ * raId         = retroachievements.org game page ID
+ * genre        = drives the Suggested Fields chips in the Scanner tab
+ * sgdbName     = exact title to send to SteamGridDB autocomplete (optional, for power users)
+ * libretroName = filename in the libretro-thumbnails public GitHub repo
+ *                (no API key needed — public CORS URLs).  This is the DEFAULT
+ *                art source so users get art with zero setup. */
+/* ═══════════════════════════════════════════════════════
+   BUILT-IN GAME LIBRARY
+   A curated seed set of well-known games across all supported
+   consoles.  Every serial and libretroName here has been
+   cross-checked against the PCSX2 GameIndex / No-Intro databases.
+
+   Fields (all optional except name + console):
+     profile     — Built-in PRESET key to load (see PRESETS below).
+     genre       — Drives the Suggested Fields chips in the Scanner tab.
+     raId        — RetroAchievements game page ID; enables RA auto-fetch.
+     sgdbName    — Exact search string for the SteamGridDB API.
+     libretroName— Filename (without .png) in the libretro-thumbnails repo.
+
+   Games not listed here are resolved via online lookup (PCSX2 GameIndex
+   for disc serials, RetroAchievements API when an RA key is saved).
+═══════════════════════════════════════════════════════ */
+const GAME_DB = {
+
+  /* ── Super Nintendo (SNES) ───────────────────────────────────────────────
+   * Game IDs are the internal ROM header title string (all uppercase).
+   * The SM profile matches the official emulnk-repo SM.json. */
+  'SUPER METROID':     { name:'Super Metroid',      profile:'SM',    console:'SNES', genre:'action',
+                         libretroName:'Super Metroid (Japan, USA)' },
+  'SUPER MARIO WORLD': { name:'Super Mario World',                   console:'SNES', genre:'platformer',
+                         libretroName:'Super Mario World (USA)' },
+
+  /* ── Game Boy Advance ────────────────────────────────────────────────────
+   * Game IDs are 4-char ROM header codes (region suffix: E=US, P=EU, J=JP).
+   * These match the profile IDs used in the official emulnk-repo. */
+  'BPRE':              { name:'Pokémon FireRed',                      console:'GBA',  genre:'rpg',
+                         libretroName:'Pokemon - Fire Red Version (USA, Europe)' },
+  'BPGE':              { name:'Pokémon LeafGreen',                    console:'GBA',  genre:'rpg',
+                         libretroName:'Pokemon - Leaf Green Version (USA, Europe)' },
+  'BPEE':              { name:'Pokémon Emerald',                      console:'GBA',  genre:'rpg',
+                         libretroName:'Pokemon - Emerald Version (USA, Europe)' },
+
+  /* ── PlayStation 1 ───────────────────────────────────────────────────────
+   * Disc serials verified via No-Intro/Redump database. */
+  'SLUS-00067':        { name:'Castlevania: Symphony of the Night',   console:'PS1',  genre:'arpg',
+                         libretroName:'Castlevania - Symphony of the Night (USA)' },
+
+  /* ── PlayStation 2 ───────────────────────────────────────────────────────
+   * All serials verified against PCSX2 GameIndex.yaml.
+   * US = SLUS/SCUS, EU = SCES/SLES, JP = SLPS/SLPM/SCPS. */
+  'SLUS-20946':        { name:'GTA San Andreas',        profile:'GTASA', console:'PS2', genre:'open-world',
+                         raId:12511, sgdbName:'Grand Theft Auto: San Andreas',
+                         libretroName:'Grand Theft Auto - San Andreas (USA)' },
+
+  'SCUS-97213':        { name:'Dark Cloud 2',            profile:'DC2',   console:'PS2', genre:'arpg',
+                         raId:2822,  sgdbName:'Dark Cloud 2',
+                         libretroName:'Dark Cloud 2 (USA)' },
+
+  'SLUS-21065':        { name:'Need for Speed Underground 2', profile:'NFSU2', console:'PS2', genre:'racing',
+                         raId:11427, sgdbName:'Need for Speed: Underground 2',
+                         libretroName:'Need for Speed Underground 2 (USA)' },
+
+  'SLUS-20552':        { name:'GTA Vice City',           profile:'GTA_VC', console:'PS2', genre:'open-world',
+                         raId:13406, sgdbName:'Grand Theft Auto: Vice City',
+                         libretroName:'Grand Theft Auto - Vice City (USA)' },
+
+  'SLUS-20062':        { name:'GTA III',                 profile:'GTA3',  console:'PS2', genre:'open-world',
+                         raId:13399, sgdbName:'Grand Theft Auto III',
+                         libretroName:'Grand Theft Auto III (USA)' },
+
+  'SCUS-97472':        { name:'Shadow of the Colossus',  profile:'SOTC',  console:'PS2', genre:'action',
+                         raId:2963,  sgdbName:'Shadow of the Colossus',
+                         libretroName:'Shadow of the Colossus (USA)' },
+
+  'SCUS-97399':        { name:'God of War',              profile:'GOW',   console:'PS2', genre:'action',
+                         raId:20432, sgdbName:'God of War',
+                         libretroName:'God of War (USA)' },
+
+  'SCUS-97330':        { name:'Jak 3',                   profile:'JAK3',  console:'PS2', genre:'platformer',
+                         raId:3864,  sgdbName:'Jak 3',
+                         libretroName:'Jak 3 (USA)' },
+
+  'SCUS-97353':        { name:'Ratchet & Clank: Up Your Arsenal', profile:'RCF', console:'PS2', genre:'platformer',
+                         raId:3252,  sgdbName:'Ratchet & Clank: Up Your Arsenal',
+                         libretroName:'Ratchet & Clank - Up Your Arsenal (USA)' },
+};
+
+/* Runtime cache for game IDs resolved via online lookup.
+ * Populated by lookupDiscSerial() / lookupViaRA(); persists for the session.
+ * getGame() is the single access point for both stores.                    */
+const GAME_CACHE = {};
+function getGame(serial){ return GAME_DB[serial] || GAME_CACHE[serial] || null; }
+
+/* ═══════════════════════════════════════════════════════
+   CONSOLE MAP
+   Single source of truth for every EmuLnk-supported system.
+   Drives the console dropdown, libretro art fetching, RetroAchievements
+   API calls, and the game ID format hint shown in the sidebar.
+
+   Fields:
+     label       — Display name shown in the console dropdown.
+     raSystemId  — RetroAchievements system ID used in API requests.
+                   Set to null if RA does not index this console.
+     libretroRepo— libretro-thumbnails GitHub repo name (one per console).
+                   Art URL: raw.githubusercontent.com/libretro-thumbnails/
+                            <repo>/master/Named_<kind>/<filename>.png
+     idFormat    — Human-readable hint about the game ID format for that
+                   console, shown below the Game ID field.
+     serialPfx   — Regex that matches disc serial IDs (PS1/PS2/PSP).
+                   null for ROM-title-based systems (SNES, GBA, etc.).
+═══════════════════════════════════════════════════════ */
+const CONSOLE_MAP = {
+  /* Nintendo ────────────────────────────────────────── */
+  'NES':     { label:'NES / Famicom',              raSystemId:  7, libretroRepo:'Nintendo_-_Nintendo_Entertainment_System',        idFormat:'ROM title',                            serialPfx:null },
+  'SNES':    { label:'Super Nintendo (SNES)',       raSystemId:  3, libretroRepo:'Nintendo_-_Super_Nintendo_Entertainment_System',  idFormat:'ROM title  (e.g. SUPER METROID)',      serialPfx:null },
+  'N64':     { label:'Nintendo 64',                raSystemId:  2, libretroRepo:'Nintendo_-_Nintendo_64',                         idFormat:'ROM title  (e.g. SUPERMARIO64)',        serialPfx:null },
+  'GB':      { label:'Game Boy',                   raSystemId:  4, libretroRepo:'Nintendo_-_Game_Boy',                            idFormat:'ROM title',                            serialPfx:null },
+  'GBC':     { label:'Game Boy Color',             raSystemId:  6, libretroRepo:'Nintendo_-_Game_Boy_Color',                      idFormat:'ROM title',                            serialPfx:null },
+  'GBA':     { label:'Game Boy Advance',           raSystemId:  5, libretroRepo:'Nintendo_-_Game_Boy_Advance',                    idFormat:'4-char game code  (e.g. BPRE)',         serialPfx:null },
+  'NDS':     { label:'Nintendo DS',                raSystemId: 18, libretroRepo:'Nintendo_-_Nintendo_DS',                         idFormat:'ROM title  (e.g. MARIO KART DS)',      serialPfx:null },
+  '3DS':     { label:'Nintendo 3DS',               raSystemId: 43, libretroRepo:'Nintendo_-_Nintendo_3DS',                        idFormat:'ROM title',                            serialPfx:null },
+  'GCN':     { label:'GameCube',                   raSystemId: 16, libretroRepo:'Nintendo_-_GameCube',                            idFormat:'Game ID  (e.g. GMSE01)',               serialPfx:/^[A-Z]{4}[0-9]{2}$/ },
+  'Wii':     { label:'Wii',                        raSystemId: 45, libretroRepo:'Nintendo_-_Wii',                                 idFormat:'Game ID  (e.g. RMCE01)',               serialPfx:/^[A-Z]{4}[0-9]{2}$/ },
+
+  /* Sony ───────────────────────────────────────────── */
+  'PS1':     { label:'PlayStation (PS1)',           raSystemId: 12, libretroRepo:'Sony_-_PlayStation',                             idFormat:'Disc serial  (e.g. SLUS-00067)',       serialPfx:/^[A-Z]{4}-[0-9]{5}$/ },
+  'PS2':     { label:'PlayStation 2 (PS2)',         raSystemId: 21, libretroRepo:'Sony_-_PlayStation_2',                           idFormat:'Disc serial  (e.g. SLUS-20946)',        serialPfx:/^[A-Z]{4}-[0-9]{5}$/ },
+  'PSP':     { label:'PlayStation Portable (PSP)', raSystemId: 41, libretroRepo:'Sony_-_PlayStation_Portable',                    idFormat:'Disc serial  (e.g. ULUS-10041)',        serialPfx:/^[A-Z]{4}-[0-9]{5}$/ },
+
+  /* Sega ───────────────────────────────────────────── */
+  'Genesis': { label:'Sega Genesis / Mega Drive',  raSystemId:  1, libretroRepo:'Sega_-_Mega_Drive_-_Genesis',                    idFormat:'ROM title  (e.g. SONIC THE HEDGEHOG)', serialPfx:null },
+};
+
+/* ═══════════════════════════════════════════════════════
+   GENRE-BASED FIELD HINTS
+   When a game ID resolves to a known genre, surface the typical
+   data points players want to scan for.  Click a chip in the Scanner
+   tab → the scan type + label hint are pre-filled.
+═══════════════════════════════════════════════════════ */
+const GENRE_FIELD_HINTS = {
+  'open-world':[
+    {id:'money',         label:'Money / Cash',     type:'u32',  hint:'Cash on hand. Spend a known amount, scan Changed.'},
+    {id:'health',        label:'Health (HP)',      type:'float',hint:'Player HP. Take damage, filter Changed.'},
+    {id:'armor',         label:'Armor',            type:'float',hint:'Often 100.0 at full.'},
+    {id:'wanted_level',  label:'Wanted Level',     type:'u16',  hint:'Police stars (0–6).'},
+    {id:'ammo',          label:'Ammo',             type:'u32',  hint:'Current weapon clip ammo.'},
+    {id:'vehicle_health',label:'Vehicle HP',       type:'float',hint:'~1000.0 in a fresh car.'},
+    {id:'pos_x',         label:'Position X',       type:'float',hint:'World X coordinate.'},
+    {id:'pos_y',         label:'Position Y',       type:'float',hint:'World Y coordinate.'},
+    {id:'heading',       label:'Heading',          type:'float',hint:'Facing angle, radians.'},
+  ],
+  'rpg':[
+    {id:'hp',            label:'HP (current)',     type:'u32',  hint:'Hit points.'},
+    {id:'max_hp',        label:'HP (max)',         type:'u32',  hint:'Max hit points.'},
+    {id:'mp',            label:'MP / Mana',        type:'u32',  hint:'Magic points.'},
+    {id:'max_mp',        label:'MP (max)',         type:'u32'},
+    {id:'gold',          label:'Gold / Money',     type:'u32',  hint:'Currency. Buy/sell, filter Changed.'},
+    {id:'level',         label:'Level',            type:'u8'   },
+    {id:'exp',           label:'Experience',       type:'u32'  },
+  ],
+  'arpg':[
+    {id:'hp',            label:'HP (current)',     type:'float',hint:'Often a float in modern ARPGs.'},
+    {id:'max_hp',        label:'HP (max)',         type:'float'},
+    {id:'mp',            label:'MP / SP',          type:'float'},
+    {id:'gold',          label:'Currency',         type:'u32',  hint:'Gold / Gilda / Bolts / etc.'},
+    {id:'level',         label:'Level',            type:'u8'   },
+    {id:'exp',           label:'Experience',       type:'u32'  },
+    {id:'floor',         label:'Floor / Stage',    type:'u8'   },
+  ],
+  'racing':[
+    {id:'speed',         label:'Speed',            type:'float',hint:'mph or km/h.'},
+    {id:'rpm',           label:'RPM',              type:'float'},
+    {id:'gear',          label:'Gear',             type:'u8',   hint:'1-6, 0=neutral.'},
+    {id:'nitrous',       label:'Nitrous / Boost',  type:'u32',  hint:'NOS amount.'},
+    {id:'position',      label:'Race Position',    type:'u8',   hint:'1st, 2nd, …'},
+    {id:'lap',           label:'Current Lap',      type:'u8'   },
+    {id:'cash',          label:'Bank Money',       type:'u32'  },
+  ],
+  'platformer':[
+    {id:'hp',            label:'HP / Hits',        type:'u8',   hint:'Often 1-byte for retro platformers.'},
+    {id:'lives',         label:'Lives',            type:'u8'   },
+    {id:'coins',         label:'Coins / Bolts',    type:'u32'  },
+    {id:'ammo',          label:'Ammo',             type:'u32'  },
+    {id:'score',         label:'Score',            type:'u32'  },
+    {id:'time',          label:'Timer',            type:'u32'  },
+  ],
+  'action':[
+    {id:'hp',            label:'HP',               type:'float'},
+    {id:'max_hp',        label:'HP (max)',         type:'float'},
+    {id:'rage',          label:'Rage / Special',   type:'float'},
+    {id:'orbs',          label:'Orbs / Currency',  type:'u32'  },
+    {id:'combo',         label:'Combo Counter',    type:'u32'  },
+  ],
+  'fighting':[
+    {id:'p1_hp',         label:'P1 Health',        type:'float'},
+    {id:'p2_hp',         label:'P2 Health',        type:'float'},
+    {id:'p1_super',      label:'P1 Super Bar',     type:'float'},
+    {id:'p2_super',      label:'P2 Super Bar',     type:'float'},
+    {id:'timer',         label:'Round Timer',      type:'u8'   },
+  ],
+  'shooter':[
+    {id:'hp',            label:'Health',           type:'float'},
+    {id:'shield',        label:'Shield / Armor',   type:'float'},
+    {id:'ammo_clip',     label:'Clip Ammo',        type:'u32'  },
+    {id:'ammo_total',    label:'Reserve Ammo',     type:'u32'  },
+    {id:'weapon',        label:'Active Weapon',    type:'u32'  },
+  ],
+};
+
+/* ═══════════════════════════════════════════════════════
+   KNOWN ADDRESS DATABASE
+   Pre-populated addresses for games in GAME_DB.  Shown as
+   clickable rows in the Scanner tab so the user can read a
+   live value without scanning from scratch.
+
+   addr:null  — address not yet confirmed; user must scan
+   addr:0xXXX — confirmed; read directly via the bridge
+   min / max  — expected range, used for quick-sanity display
+   source     — where the address was sourced from
+
+   Addresses are console-specific:
+     PS2 / PS1 use the emulated CPU's physical RAM addresses.
+     SNES, N64, GBA etc. use the emulator's memory map.
+   Addresses for non-PS2 consoles will be added as the
+   emulnk-repo profiles are contributed for those systems.
+═══════════════════════════════════════════════════════ */
+const KNOWN_ADDRS = {
+
+  /* ── PlayStation 2 ─────────────────────────────────── */
+
+  /* GTA San Andreas – NTSC-U SLUS-20946, CodeBreaker v9+ confirmed */
+  'SLUS-20946':[
+    {addr:0x00A2DA04,id:'money',        label:'Cash',         type:'u32',  hint:'Current money (int32). CB code: 20A2DA04.',              min:0,  max:999999999},
+    {addr:0x00A4C6B4,id:'health',       label:'Health',       type:'float',hint:'HP float. 100.0 base, 200.0 after upgrades. CB: 20A4C6B4.',min:0,  max:200},
+    {addr:0x00A4C6B8,id:'max_health',   label:'Max Health',   type:'float',hint:'Max HP cap (100.0 or 200.0). Adjacent to health.',        min:95, max:205},
+    {addr:0x00A4C6AE,id:'wanted_level', label:'Wanted Stars', type:'u16',  hint:'Stars (0–6). CB code: 10A4C6AE.',                        min:0,  max:6},
+    {addr:null,      id:'armor',        label:'Armor',        type:'float',hint:'Scan 100.0 (hex 42C80000) when at full armor. Near 0x00A4C700 area.'},
+    {addr:null,      id:'vehicle_health',label:'Vehicle HP',  type:'float',hint:'Scan ~1000.0 inside a fully-repaired vehicle.'},
+    {addr:null,      id:'weapon_slot',  label:'Weapon Slot',  type:'u32',  hint:'Scan current weapon slot index (0–12). Hold a known weapon.'},
+    {addr:null,      id:'weapon_ammo_clip',label:'Clip Ammo', type:'u32',  hint:'Scan clip ammo count. Expect at offset +0x4 from weapon_slot base.'},
+    {addr:null,      id:'stamina',      label:'Stamina',      type:'float',hint:'Scan after heavy sprinting. Value rises toward 1000.0.'},
+    {addr:null,      id:'muscle',       label:'Muscle',       type:'float',hint:'Scan muscle stat (0–1000.0). Rises after gym workouts.'},
+    {addr:null,      id:'respect',      label:'Respect',      type:'float',hint:'Scan respect stat (0–1000.0).'},
+    {addr:null,      id:'pos_x',        label:'Position X',   type:'float',hint:'World X float (SA range ~-3000 to +3000). Hold still, scan known coordinate.'},
+    {addr:null,      id:'pos_y',        label:'Position Y',   type:'float',hint:'World Y float. Scan alongside X.'},
+    {addr:null,      id:'heading',      label:'Heading',      type:'float',hint:'Heading in radians (−π to +π). Face north (≈0) or south (≈±3.14).'},
+  ],
+  /* Dark Cloud 2 – NTSC-U SCUS-97213 */
+  'SCUS-97213':[
+    {addr:null,id:'current_hp',  label:'Max HP (current)', type:'float',hint:'Scan Max\'s current HP float. Check the character screen for the value.'},
+    {addr:null,id:'max_hp',      label:'Max HP (cap)',     type:'float',hint:'Scan the HP cap — should equal listed Max HP exactly.'},
+    {addr:null,id:'monica_hp',   label:'Monica HP',        type:'float',hint:'Scan Monica\'s HP when her value is displayed.'},
+    {addr:null,id:'gilda',       label:'Gilda Currency',   type:'u32',  hint:'Scan Gilda count (integer). Earn/spend 1 Gilda then filter Changed.'},
+    {addr:null,id:'ridepod_fuel',label:'Ridepod Fuel',     type:'float',hint:'Scan Ridepod fuel level (0–100.0).'},
+    {addr:null,id:'floor_number',label:'Floor Number',     type:'u8',   hint:'Scan current dungeon floor (integer, 1-based).'},
+  ],
+  /* NFS Underground 2 – NTSC-U SLUS-21065 */
+  'SLUS-21065':[
+    {addr:null,id:'bank_money',label:'Bank Money', type:'u32',  hint:'Scan bank balance. Spend a small known amount then scan Changed.'},
+    {addr:null,id:'speed',     label:'Speed',      type:'float',hint:'Scan current speed (float). Works best at a steady speed on straight road.'},
+    {addr:null,id:'nitrous',   label:'Nitrous',    type:'u32',  hint:'Scan NOS amount. Use some, then filter Changed.'},
+    {addr:null,id:'gear',      label:'Gear',       type:'u8',   hint:'Scan current gear (1–6, 0 = neutral).'},
+    {addr:null,id:'rpm',       label:'RPM',        type:'float',hint:'Scan RPM (float). Hold a steady RPM and scan.'},
+  ],
+  /* GTA Vice City – NTSC-U SLUS-20552 */
+  'SLUS-20552':[
+    {addr:null,id:'health',label:'Health',type:'float',hint:'Scan HP float (0–200.0). Follow same strategy as SA.'},
+    {addr:null,id:'money', label:'Money', type:'u32',  hint:'Scan cash balance (int32).'},
+    {addr:null,id:'armor', label:'Armor', type:'float',hint:'Scan 100.0 when at full armor.'},
+  ],
+  /* GTA III – NTSC-U SLUS-20062 */
+  'SLUS-20062':[
+    {addr:null,id:'health',label:'Health',type:'float',hint:'Scan HP float. Start with 100.0.'},
+    {addr:null,id:'money', label:'Money', type:'u32',  hint:'Scan cash (int32).'},
+  ],
+};
+
+const state = {
+  meta:{ id:'MyTheme', name:'My HUD', console:'', profileId:'', gameId:'', author:'', description:'' },
+  widgets:[], profile:null, selected:null, nextId:1, scale:1,
+  /* working profile built from pins */
+  workingProfile:{ dataPoints:[], bundles:{} },
+};
+
+/**
+ * Widget type registry.
+ * Each entry defines the palette label/icon, default size (dW×dH),
+ * and the default config object that gets deep-copied into each new widget.
+ */
+const WTYPES = {
+  bar:     { label:'Bar',     icon:'▬', dW:300, dH:46,  cfg:{ label:'HEALTH', dp:'', maxDp:'', maxVal:100, fill:'#4DFF91', bh:8 } },
+  number:  { label:'Number',  icon:'#', dW:160, dH:52,  cfg:{ label:'MONEY',  dp:'', pfx:'$', sfx:'', dec:0, fs:26, color:'#FFD700' } },
+  stars:   { label:'Stars',   icon:'★', dW:150, dH:24,  cfg:{ dp:'', count:6, onC:'#FFD700', offC:'#2a2a2a', sz:18 } },
+  text:    { label:'Text',    icon:'T', dW:120, dH:22,  cfg:{ text:'Label', fs:13, color:'#aaaaaa', bold:false } },
+  minimap: { label:'Map',     icon:'◎', dW:130, dH:130, cfg:{ xDp:'', yDp:'', hDp:'', trail:'#FF8C00', dot:'#ffffff', wMin:-3000, wMax:3000 } },
+  scanner: { label:'Scanner', icon:'🔍',dW:220, dH:120, cfg:{ title:'MEMORY SCANNER' } },
+  editor:  { label:'Editor',  icon:'✏', dW:180, dH:80,  cfg:{ dp:'', label:'EDIT VALUE', addr:'0x00000000', typeStr:'u32_le' } },
+  image:   { label:'Image',   icon:'🖼', dW:300, dH:120, cfg:{ src:'', fit:'cover', radius:6, opacity:1 } },
+};
+
+/**
+ * Built-in profile presets.
+ * These mirror the profiles in the official emulnk-repo and are loaded
+ * automatically when a matching game ID is entered.
+ * dataPoints IDs must match the profile JSON and the KNOWN_ADDRS keys above.
+ */
+const PRESETS = {
+
+  /* ── Super Nintendo ───────────────────────────────── */
+
+  'SM':   { id:'SM',    name:'Super Metroid',      platform:'SNES', gameId:'SUPER METROID',
+    dataPoints:[
+      {id:'energy',         desc:'Current energy / HP (u16)'},
+      {id:'max_energy',     desc:'Maximum energy (u16)'},
+      {id:'missiles',       desc:'Current missiles (u16)'},
+      {id:'max_missiles',   desc:'Maximum missiles (u16)'},
+      {id:'super_missiles', desc:'Super missiles (u16)'},
+      {id:'power_bombs',    desc:'Power bombs (u16)'},
+      {id:'room_id',        desc:'Current room identifier (u16)'},
+      {id:'area_id',        desc:'Current area index (u8)'},
+    ] },
+
+  /* ── PlayStation 2 ────────────────────────────────── */
+
+  'DC2':  { id:'DC2',   name:'Dark Cloud 2',      platform:'PS2', gameId:'SCUS-97213',
+    dataPoints:[
+      {id:'current_hp',    desc:'Max current HP (float)'},
+      {id:'max_hp',        desc:'Max HP cap (float)'},
+      {id:'monica_hp',     desc:'Monica HP (float)'},    /* was 'monica_current_hp' — standardised */
+      {id:'gilda',         desc:'Gilda currency (u32)'},
+      {id:'ridepod_fuel',  desc:'Ridepod fuel (float)'},
+      {id:'ridepod_max_fuel',desc:'Ridepod max fuel (float)'},
+      {id:'floor_number',  desc:'Floor number (u8)'},
+      {id:'party_status',  desc:'Party status bitmask (u8)'},
+    ] },
+  'GTASA':{ id:'GTASA', name:'GTA San Andreas',    platform:'PS2', gameId:'SLUS-20946',
+    dataPoints:[
+      {id:'money',            desc:'Cash (u32)'},
+      {id:'health',           desc:'Health (float)'},
+      {id:'max_health',       desc:'Max health (float)'},
+      {id:'armor',            desc:'Armor (float)'},
+      {id:'wanted_level',     desc:'Wanted stars (u16)'},
+      {id:'weapon_slot',      desc:'Weapon slot index (u32)'},
+      {id:'weapon_ammo_clip', desc:'Clip ammo (u32)'},
+      {id:'weapon_ammo_total',desc:'Reserve ammo (u32)'},
+      {id:'pos_x',            desc:'X world position (float)'},
+      {id:'pos_y',            desc:'Y world position (float)'},
+      {id:'heading',          desc:'Heading radians (float)'},
+      {id:'vehicle_health',   desc:'Vehicle HP (float)'},
+      {id:'stamina',          desc:'Stamina stat (float)'},
+      {id:'muscle',           desc:'Muscle stat (float)'},
+      {id:'fat',              desc:'Fat level (float)'},
+      {id:'respect',          desc:'Respect stat (float)'},
+    ] },
+  'NFSU2':{ id:'NFSU2', name:'NFS Underground 2',  platform:'PS2', gameId:'SLUS-21065',
+    dataPoints:[
+      {id:'bank_money',    desc:'Bank balance (u32)'},
+      {id:'nitrous',       desc:'Nitrous amount (u32)'},  /* was 'nitrous_amount' — standardised */
+      {id:'speed',         desc:'Speed (float)'},
+      {id:'gear',          desc:'Gear (u8)'},
+      {id:'rpm',           desc:'RPM (float)'},
+      {id:'race_position', desc:'Race position (u8)'},
+      {id:'pos_x',         desc:'X position (float)'},
+      {id:'pos_y',         desc:'Y position (float)'},
+    ] },
+};
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+addEventListener('DOMContentLoaded', () => {
+  try {
+    buildConsoleSelect();          /* populate console dropdown from CONSOLE_MAP */
+    buildPalette();
+    buildPresets();
+    scaleCanvas();
+    startDemo();
+    loadKeys();                    /* restore saved RA + SteamGridDB keys */
+
+    /* Persist API key edits to localStorage as the user types */
+    ['ra-uid', 'ra-key', 'sg-key'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', saveKeys);
+    });
+
+    console.log('[EmuLnk Theme Builder v2026-05] ✓ loaded — multi-console, live game lookup, libretro art, RA/SGDB under Advanced');
+
+    /* Try localhost auto-connect (works when Builder is opened on the emulator device) */
+    setTimeout(tryLocalConnect, 600);
+  } catch(e) {
+    console.error('[Theme Builder] Init error:', e);
+    /* Show a visible banner so the user can report the issue */
+    document.body.insertAdjacentHTML('afterbegin',
+      `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#5a0000;color:#fff;font-size:12px;padding:6px 12px;font-family:monospace">
+        Theme Builder init error — check DevTools console for details: ${e.message}
+      </div>`);
+  }
+});
+addEventListener('resize', scaleCanvas);
+
+/** Scale the 360×640 canvas to fit the available centre pane, max 1.5×. */
+function scaleCanvas() {
+  const a = document.getElementById('carea');
+  // Clamp to [0.1, 1.5]: prevents negative/zero scale on very narrow windows
+  // which would cause the canvas transform to flip and overlap the sidebars.
+  const sc = Math.max(0.1, Math.min((a.clientWidth-40)/CW, (a.clientHeight-40)/CH, 1.5));
+  state.scale = sc;
+  const wrap = document.getElementById('cwrap'), cvs = document.getElementById('canvas');
+  cvs.style.transform = `scale(${sc})`;
+  wrap.style.width  = Math.round(CW*sc)+'px';
+  wrap.style.height = Math.round(CH*sc)+'px';
+  document.getElementById('scale-hint').textContent = Math.round(sc*100)+'%  360×640';
+}
+
+function switchTab(t) {
+  ['design','scanner'].forEach(id => {
+    document.getElementById('tab-'+id).classList.toggle('active', id===t);
+    document.getElementById('tc-'+id).classList.toggle('active', id===t);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   ONLINE GAME LOOKUP
+   Two complementary strategies depending on the game ID format:
+
+   lookupDiscSerial(serial)
+     — For PS1 / PS2 / PSP disc serials (format: XXXX-NNNNN).
+     — Fetches the PCSX2 GameIndex.yaml from raw.githubusercontent.com
+       (always CORS-open, no auth required).  The ~2.3 MB YAML is
+       downloaded once per session and cached in sessionStorage;
+       subsequent lookups are instant in-memory regex searches.
+
+   lookupViaRA(query, raSystemId)
+     — Universal fallback for any console when an RA API key is saved.
+     — Sends the game ID / title to RetroAchievements SearchGamesList,
+       filtered by console when a system ID is known.
+     — Returns raId + title which enables the RA achievements panel.
+═══════════════════════════════════════════════════════ */
+
+const _PCSX2_IDX_URL = 'https://raw.githubusercontent.com/PCSX2/pcsx2/master/bin/resources/GameIndex.yaml';
+const _RA_API_BASE   = 'https://retroachievements.org/API';
+
+/* ── Helpers ──────────────────────────────────────────────────────────── */
+
+/**
+ * Infer a genre tag from common title keywords.
+ * Used for games resolved online that lack a hand-tuned genre in GAME_DB.
+ */
+function inferGenreFromTitle(title) {
+  const t = title.toLowerCase();
+  if (/grand theft auto|gta\b|saints row|scarface|true crime/.test(t))            return 'open-world';
+  if (/final fantasy|dragon quest|kingdom hearts|tales of|xenosaga|persona|shin megami|star ocean|dark cloud|rogue galaxy|arc the lad/.test(t)) return 'rpg';
+  if (/devil may cry|god of war|onimusha|dynasty warriors|ninja gaiden|samurai warriors/.test(t)) return 'action';
+  if (/\bjak\b|crash\b|spyro|ratchet|sly \b|sonic |rayman|bandicoot|mario/.test(t)) return 'platformer';
+  if (/need for speed|nfs\b|burnout|gran turismo|midnight club|ridge racer|\bwrc\b|motogp|formula one|f1 /.test(t)) return 'racing';
+  if (/silent hill|resident evil|fatal frame|forbidden siren/.test(t))             return 'survival-horror';
+  if (/tekken|soul calibur|mortal kombat|street fighter|virtua fighter|king of fighters/.test(t)) return 'fighting';
+  if (/metroid|castlevania|hollow knight|symphony of the night/.test(t))           return 'arpg';
+  if (/metal gear|splinter cell|\btenchu\b/.test(t))                               return 'stealth';
+  if (/socom|medal of honor|battlefield|ghost recon|rainbow six/.test(t))          return 'shooter';
+  if (/pokemon|pokémon/.test(t))                                                   return 'rpg';
+  if (/tony hawk|madden|\bfifa\b|\bpes\b|pro evolution|\bnba\b|\bnfl\b/.test(t))  return 'sports';
+  return 'action';
+}
+
+/**
+ * Best-effort libretro-thumbnails filename from title + game ID.
+ * For disc serials the region suffix is read from the 4-char prefix;
+ * for ROM-title IDs we fall back to the console's primary region.
+ *
+ * @param {string} name      Canonical game title
+ * @param {string} gameId    Game ID typed by the user
+ * @param {string} console   Console key (from CONSOLE_MAP)
+ */
+function inferLibretroName(name, gameId, console) {
+  /* Disc serial → derive region from the prefix (SLUS=US, SCES=EU, etc.) */
+  const serialRegion = {
+    SLUS:'USA', SCUS:'USA',
+    SCES:'Europe', SLES:'Europe',
+    SCPS:'Japan', SLPS:'Japan', SLPM:'Japan',
+    ULUS:'USA', UCES:'Europe',
+  }[gameId.slice(0, 4).toUpperCase()];
+
+  /* ROM-title consoles → use a sensible default region per platform */
+  const consoleRegion = { SNES:'USA', NES:'USA', N64:'USA', GBA:'USA', GBC:'USA',
+                           GB:'USA', NDS:'USA', '3DS':'USA', GCN:'USA', Wii:'USA',
+                           Genesis:'USA' }[console] || 'USA';
+
+  const region = serialRegion || consoleRegion;
+  return name + ' (' + region + ')';
+}
+
+/* ── Disc serial lookup (PS1 / PS2 / PSP) ────────────────────────────── */
+
+/**
+ * Resolve a disc serial (e.g. SLUS-21355) against the PCSX2 GameIndex.yaml.
+ * Zero-config — no API key required.
+ *
+ * The YAML is fetched once and stored in sessionStorage so only the first
+ * call per browser session hits the network.
+ *
+ * @param  {string} serial  Uppercase disc serial, e.g. "SLUS-21355"
+ * @param  {string} con     Console key from CONSOLE_MAP
+ * @returns {Promise<object|null>}  Resolved game object or null
+ */
+async function lookupDiscSerial(serial, con) {
+  try {
+    /* Retrieve or download the YAML */
+    let yaml = null;
+    try { yaml = sessionStorage.getItem('_pcsx2idx'); } catch(e) {}
+    if (!yaml) {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 14000);
+      const r    = await fetch(_PCSX2_IDX_URL, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) return null;
+      yaml = await r.text();
+      try { sessionStorage.setItem('_pcsx2idx', yaml); } catch(e) {}
+    }
+
+    /* Serials are top-level YAML keys: "SLUS-12345:\n"
+     * Use fast indexOf then grab the next 500 chars for the name field. */
+    const needle = '\n' + serial + ':';
+    const pos    = yaml.indexOf(needle);
+    if (pos === -1) return null;
+
+    const chunk = yaml.slice(pos, pos + 500);
+    const m     = chunk.match(/[\r\n]\s+(?:name|GameName|title):\s+["']?([^"'\r\n]+)["']?/i);
+    if (!m) return null;
+
+    const name  = m[1].trim();
+    const genre = inferGenreFromTitle(name);
+    return {
+      name,
+      genre,
+      console:      con || 'PS2',
+      libretroName: inferLibretroName(name, serial, con || 'PS2'),
+      _src:         'PCSX2',
+    };
+  } catch(e) {
+    console.warn('[theme-builder] PCSX2 lookup failed:', e.message);
+    return null;
+  }
+}
+
+/* ── RetroAchievements lookup (any console) ───────────────────────────── */
+
+/**
+ * Search the RetroAchievements game list for a title or game ID string.
+ * Requires a saved RA API key (see Advanced panel).
+ *
+ * Optionally filters by RA system ID so results are console-specific.
+ * Returns the best match (highest achievement count = most likely correct).
+ *
+ * @param  {string} query       Game ID or title to search for
+ * @param  {number|null} raSysId RA system ID from CONSOLE_MAP, or null
+ * @param  {string} raKey       RetroAchievements API key
+ * @returns {Promise<object|null>}
+ */
+async function lookupViaRA(query, raSysId, raKey) {
+  if (!raKey || !query) return null;
+  try {
+    let url = `${_RA_API_BASE}/API_SearchGamesList.php?y=${encodeURIComponent(raKey)}&search=${encodeURIComponent(query)}`;
+    if (raSysId) url += `&c=${raSysId}`;
+
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 8000);
+    const r    = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) return null;
+
+    const data    = await r.json();
+    const results = Object.values(data || {});
+    if (!results.length) return null;
+
+    /* Pick the result with the most achievements — usually the definitive entry */
+    results.sort((a, b) => (b.NumAchievements || 0) - (a.NumAchievements || 0));
+    const hit = results[0];
+
+    const name  = hit.Title || query;
+    const genre = inferGenreFromTitle(name);
+    const con   = hit.ConsoleName || '';
+    return {
+      name,
+      genre,
+      console:      con,
+      raId:         parseInt(hit.ID, 10) || null,
+      libretroName: inferLibretroName(name, query, con),
+      _src:         'RA',
+    };
+  } catch(e) {
+    console.warn('[theme-builder] RA lookup failed:', e.message);
+    return null;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONSOLE SELECTOR
+═══════════════════════════════════════════════════════ */
+
+/**
+ * Populate the console <select> from CONSOLE_MAP and restore the
+ * previously selected value (or leave blank on first load).
+ * Called once from DOMContentLoaded.
+ */
+function buildConsoleSelect() {
+  const sel = document.getElementById('m-con');
+  /* Blank first option — forces an explicit choice */
+  sel.innerHTML = '<option value="">— select console —</option>';
+  Object.entries(CONSOLE_MAP).forEach(([key, c]) => {
+    const opt = document.createElement('option');
+    opt.value       = key;
+    opt.textContent = c.label;
+    sel.appendChild(opt);
+  });
+  /* Restore any value already in state (e.g. from a loaded preset) */
+  if (state.meta.console) sel.value = state.meta.console;
+}
+
+/**
+ * Fired when the user picks a console.
+ * Updates state and refreshes the game ID format hint.
+ */
+function onConsoleChange(key) {
+  state.meta.console = key;
+  const hint  = document.getElementById('gameid-hint');
+  const entry = CONSOLE_MAP[key];
+  hint.textContent = entry ? entry.idFormat : '';
+}
+
+/* ═══════════════════════════════════════════════════════
+   GAME ID AUTO-FILL
+   Resolves a typed game ID through three tiers:
+     1. Local GAME_DB / GAME_CACHE  (instant)
+     2. PCSX2 GameIndex            (disc serials only, zero-config)
+     3. RetroAchievements search   (any console, requires RA key)
+═══════════════════════════════════════════════════════ */
+
+/**
+ * Apply a resolved game object to state and all UI panels.
+ * Called by onGameId() after any successful lookup.
+ *
+ * @param {string} gameId  The normalised game ID that was looked up
+ * @param {object} g       Resolved game object from GAME_DB / lookup
+ */
+function _applyGameMeta(gameId, g) {
+  const lbl = document.getElementById('game-lookup');
+  const src = g._src ? '  ·  via ' + g._src : '';
+  lbl.textContent = '✓  ' + g.name + (g.genre ? '  [' + g.genre + ']' : '') + src;
+  lbl.style.color = '#4DFF91';
+
+  /* Sync console dropdown when a game resolves it */
+  if (g.console && g.console !== state.meta.console) {
+    state.meta.console = g.console;
+    const sel = document.getElementById('m-con');
+    if (sel) sel.value = g.console;
+    onConsoleChange(g.console);
+  }
+
+  /* Profile ID and preset */
+  if (g.profile) {
+    state.meta.profileId = g.profile;
+    document.getElementById('m-prof').value = g.profile;
+    if (!state.profile && PRESETS[g.profile]) loadPreset(g.profile);
+  }
+
+  /* RA game ID — pre-fills the RA panel and optionally auto-fires the fetch */
+  if (g.raId) {
+    document.getElementById('ra-gid').value = g.raId;
+    const raKey = document.getElementById('ra-key').value;
+    if (raKey) {
+      clearTimeout(window._raTimer);
+      window._raTimer = setTimeout(() => fetchRA().catch(() => {}), 800);
+    }
+  }
+
+  renderKnownAddrs(gameId);
+  renderSuggestedFields(gameId);
+  renderLibretroArt(gameId);
+  if (scConnected) setTimeout(kaReadAll, 50);
+}
+
+/**
+ * Called on every keystroke in the Game ID field.
+ * Normalises input, checks local DB first, then dispatches to the
+ * appropriate online lookup based on the ID format and selected console.
+ */
+function onGameId(v) {
+  state.meta.gameId = v;
+  const gameId = v.trim().toUpperCase();
+  const lbl    = document.getElementById('game-lookup');
+  clearTimeout(window._gidTimer);
+
+  /* ── Tier 1: local DB (instant) ───────────────────── */
+  const local = getGame(gameId);
+  if (local) {
+    _applyGameMeta(gameId, local);
+    return;
+  }
+
+  /* ── Tier 2 + 3: online lookup (debounced 600 ms) ─── */
+  const isDiscSerial = /^[A-Z]{4}-[0-9]{5}$/.test(gameId);  /* PS1/PS2/PSP format */
+  const con          = state.meta.console;
+  const conInfo      = CONSOLE_MAP[con] || null;
+  const raKey        = document.getElementById('ra-key')?.value || '';
+
+  /* Only attempt lookup once the ID looks complete */
+  const readyToLook  = isDiscSerial || (gameId.length >= 3 && raKey);
+  if (!readyToLook) {
+    lbl.textContent = gameId.length > 2 ? 'Enter a full game ID — or save an RA key to search by title' : '';
+    lbl.style.color = '#555';
+    renderKnownAddrs(gameId);
+    renderSuggestedFields(gameId);
+    const sec = document.getElementById('art-sec');
+    if (sec) sec.style.display = 'none';
+    return;
+  }
+
+  lbl.textContent = '🔍  Looking up  ' + gameId + ' …';
+  lbl.style.color = '#FF8C00';
+
+  window._gidTimer = setTimeout(async () => {
+    let found = null;
+
+    /* Tier 2 — PCSX2 GameIndex (disc serials, zero-config) */
+    if (isDiscSerial) {
+      found = await lookupDiscSerial(gameId, con || 'PS2');
+    }
+
+    /* Tier 3 — RetroAchievements (any console, requires RA key) */
+    if (!found && raKey) {
+      const raSysId = conInfo?.raSystemId ?? null;
+      found = await lookupViaRA(gameId, raSysId, raKey);
+    }
+
+    if (found) {
+      GAME_CACHE[gameId] = found;
+      _applyGameMeta(gameId, found);
+      toast('✓  ' + found.name + '  —  ' + (found._src || 'online lookup'));
+    } else {
+      lbl.textContent = '⚠  Not found — set Profile ID and Console manually';
+      lbl.style.color = '#888';
+      renderKnownAddrs(gameId);
+      renderSuggestedFields(gameId);
+      const sec = document.getElementById('art-sec');
+      if (sec) sec.style.display = 'none';
+    }
+  }, 600);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PALETTE & PRESETS
+═══════════════════════════════════════════════════════ */
+function buildPalette() {
+  const el = document.getElementById('palette');
+  Object.entries(WTYPES).forEach(([type, d]) => {
+    const b = document.createElement('div');
+    b.className = 'pal-item';
+    b.innerHTML = `<span class="pi-icon">${d.icon}</span><span class="pi-lbl">${d.label}</span>`;
+    b.onclick = () => addWidget(type);
+    el.appendChild(b);
+  });
+}
+function buildPresets() {
+  const el = document.getElementById('presets');
+  Object.keys(PRESETS).forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'preset-btn'; b.textContent = k;
+    b.onclick = () => loadPreset(k);
+    el.appendChild(b);
+  });
+}
+function loadPreset(k) {
+  const p = PRESETS[k]; if(!p) return;
+  state.profile = p;
+  state.meta.profileId = p.id;
+  state.meta.console   = p.platform;
+  document.getElementById('m-prof').value = p.id;
+  document.getElementById('m-con').value  = p.platform;
+  renderDpList(); toast('Profile: '+p.name);
+}
+function renderDpList() {
+  const el = document.getElementById('dp-list');
+  /* merge preset + working profile data points */
+  const dps = [
+    ...(state.profile ? state.profile.dataPoints : []),
+    ...state.workingProfile.dataPoints.filter(d => !(state.profile?.dataPoints||[]).find(x=>x.id===d.id)),
+  ];
+  if (!dps.length) { el.innerHTML='<span style="color:#333;font-size:10px;padding:4px 8px;display:block">No data points yet.</span>'; return; }
+  const usedIds = new Set(state.widgets.flatMap(w=>[w.cfg.dp,w.cfg.maxDp,w.cfg.xDp,w.cfg.yDp,w.cfg.hDp].filter(Boolean)));
+  el.innerHTML = '';
+  dps.forEach(dp => {
+    const d = document.createElement('div');
+    d.className = 'dp-item'+(usedIds.has(dp.id)?' pinned':'');
+    const badge = state.workingProfile.dataPoints.find(x=>x.id===dp.id)
+      ? '<span class="dp-badge">SCANNED</span>' : '';
+    d.innerHTML = `${badge}<span>${dp.id}</span>`;
+    d.title = dp.desc||dp.description||'';
+    d.onclick = () => bindDpToSelected(dp.id);
+    el.appendChild(d);
+  });
+}
+function bindDpToSelected(id) {
+  if (!state.selected) { toast('Select a widget first'); return; }
+  const w = state.widgets.find(x=>x.id===state.selected); if(!w) return;
+  if (w.type==='bar'||w.type==='number') w.cfg.dp = id;
+  else if (w.type==='stars') w.cfg.dp = id;
+  else if (w.type==='minimap') { toast('Use X/Y/Heading fields for minimap'); return; }
+  renderWidget(w); selectWidget(w.id); renderDpList(); toast('Bound '+id);
+}
+
+/* ═══════════════════════════════════════════════════════
+   WIDGET MANAGEMENT
+═══════════════════════════════════════════════════════ */
+function addWidget(type) {
+  const d = WTYPES[type];
+  const w = { id:'w'+(state.nextId++), type, x:Math.round((CW-d.dW)/2), y:Math.round((CH-d.dH)/2), w:d.dW, h:d.dH, cfg:{...d.cfg} };
+  state.widgets.push(w);
+  renderWidget(w); selectWidget(w.id); renderDpList();
+}
+function removeWidget(id) {
+  state.widgets = state.widgets.filter(w=>w.id!==id);
+  const el = document.getElementById(id); if(el) el.remove();
+  state.selected=null; renderPropsPanel(null); renderDpList();
+}
+
+/**
+ * Render (or re-render) a widget DOM element.
+ * On first call the element is created and appended to the canvas.
+ * On subsequent calls only innerHTML is replaced so drag listeners survive.
+ */
+function renderWidget(w) {
+  let el = document.getElementById(w.id);
+  const isNew = !el;
+  if (isNew) { el=document.createElement('div'); el.id=w.id; el.className='cv-widget'; document.getElementById('canvas').appendChild(el); attachDrag(el,w); }
+  el.style.cssText = `left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px`;
+  el.innerHTML = widgetHTML(w);
+  if (w.type!=='text') { const rh=document.createElement('div'); rh.className='rh'; el.appendChild(rh); attachResize(rh,w); }
+  el.onclick = e=>{ e.stopPropagation(); selectWidget(w.id); };
+}
+
+function widgetHTML(w) {
+  const c=w.cfg;
+  switch(w.type) {
+    case 'bar': return `<div class="wg-bar-lbl"><span>${esc(c.label)}</span><span>75/100</span></div><div class="wg-bar-trk" style="height:${c.bh}px"><div class="wg-bar-fill" style="width:75%;background:${c.fill};height:100%"></div></div>`;
+    case 'number': return `<div class="wg-num-lbl">${esc(c.label)}</div><div class="wg-num-val" style="font-size:${c.fs}px;color:${c.color}">${c.pfx}1,234${c.sfx}</div>`;
+    case 'stars': { const sz=c.sz+'px'; return '<div class="wg-stars">'+Array.from({length:c.count},(_,i)=>`<div class="wg-star" style="width:${sz};height:${sz};background:${i<3?c.onC:c.offC}"></div>`).join('')+'</div>'; }
+    case 'text': return `<div style="font-size:${c.fs}px;color:${c.color};font-weight:${c.bold?700:400};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.text)}</div>`;
+    case 'minimap': { const sz=Math.min(w.w,w.h); return `<canvas class="wg-map" id="mm_${w.id}" width="${sz}" height="${sz}" style="width:${sz}px;height:${sz}px"></canvas>`; }
+    case 'scanner': return `<div class="wg-scanner" style="height:${w.h}px"><div class="wg-sc-title">${esc(c.title)}</div><div class="wg-sc-row"><input class="wg-sc-inp" placeholder="scan value" readonly><button class="wg-sc-btn">Scan</button></div><div class="wg-sc-res" style="color:#555;font-size:9px">— results appear here —</div><div style="display:flex;gap:3px"><button class="wg-sc-btn">Changed</button><button class="wg-sc-btn">Same</button><button class="wg-sc-btn">= Val</button></div></div>`;
+    case 'editor': return `<div class="wg-editor" style="height:${w.h}px"><div class="wg-ed-title">${esc(c.label)}</div><div class="wg-ed-val">—</div><div class="wg-ed-addr" style="font-family:monospace">${c.addr||'—'}</div><div style="display:flex;gap:4px;margin-top:4px"><input style="flex:1;background:#111;border:1px solid #3a2050;border-radius:2px;padding:2px 6px;font-size:10px;color:#eee" placeholder="new value" readonly><button class="wg-sc-btn" style="color:#BB86FC;border-color:#3a2050">Write</button></div></div>`;
+    case 'image': return c.src
+      ? `<img src="${esc(c.src)}" style="width:100%;height:100%;object-fit:${c.fit};border-radius:${c.radius}px;opacity:${c.opacity};display:block">`
+      : `<div style="width:100%;height:100%;background:#1a1a1a;border:1px dashed #3a3a3a;border-radius:${c.radius}px;display:flex;align-items:center;justify-content:center;color:#555;font-size:11px;text-align:center;padding:8px">No image — set <b style="color:#FF8C00">Image URL</b><br>or use ⚡SteamGridDB</div>`;
+  }
+  return '';
+}
+
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ── Selection ── */
+function selectWidget(id) {
+  document.querySelectorAll('.cv-widget').forEach(e=>e.classList.remove('selected'));
+  state.selected=id;
+  const w=state.widgets.find(x=>x.id===id);
+  if(w){ document.getElementById(id).classList.add('selected'); renderPropsPanel(w); }
+}
+function canvasClick(e){ if(e.target.id==='canvas'){ document.querySelectorAll('.cv-widget').forEach(e=>e.classList.remove('selected')); state.selected=null; renderPropsPanel(null); } }
+
+/* ── Drag & resize ── */
+function attachDrag(el,w){
+  let sx,sy,swx,swy,drag=false;
+  function start(cx,cy){sx=cx;sy=cy;swx=w.x;swy=w.y;drag=true}
+  function move(cx,cy){if(!drag)return;const sc=state.scale;w.x=Math.round(Math.max(0,Math.min(CW-w.w,swx+(cx-sx)/sc)));w.y=Math.round(Math.max(0,Math.min(CH-w.h,swy+(cy-sy)/sc)));el.style.left=w.x+'px';el.style.top=w.y+'px';if(state.selected===w.id)updPos(w)}
+  function end(){drag=false}
+  el.addEventListener('mousedown',e=>{if(e.target.classList.contains('rh'))return;e.preventDefault();start(e.clientX,e.clientY);const mm=e2=>move(e2.clientX,e2.clientY),mu=()=>{end();removeEventListener('mousemove',mm);removeEventListener('mouseup',mu)};addEventListener('mousemove',mm);addEventListener('mouseup',mu)});
+  el.addEventListener('touchstart',e=>{if(e.target.classList.contains('rh'))return;start(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+  el.addEventListener('touchmove',e=>move(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  el.addEventListener('touchend',end,{passive:true});
+}
+function attachResize(rh,w){
+  rh.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();const sx=e.clientX,sy=e.clientY,sw=w.w,sh=w.h,sc=state.scale;const mm=e2=>{w.w=Math.max(40,Math.round(sw+(e2.clientX-sx)/sc));w.h=Math.max(20,Math.round(sh+(e2.clientY-sy)/sc));const el=document.getElementById(w.id);el.style.width=w.w+'px';el.style.height=w.h+'px';if(state.selected===w.id)updPos(w)},mu=()=>{renderWidget(w);removeEventListener('mousemove',mm);removeEventListener('mouseup',mu)};addEventListener('mousemove',mm);addEventListener('mouseup',mu)});
+}
+function updPos(w){['x','y','w','h'].forEach(k=>{const el=document.getElementById('p-'+k);if(el)el.value=w[k]})}
+
+/* ═══════════════════════════════════════════════════════
+   PROPERTIES PANEL
+═══════════════════════════════════════════════════════ */
+function R(lbl,inp){return`<div class="prop-row"><label class="prop-lbl">${lbl}</label>${inp}</div>`}
+function I(id,v,cb,t='text',x=''){return`<input class="prop-inp" id="${id}" type="${t}" value="${esc(String(v??''))}" ${x} oninput="${cb}">`}
+function S(id,opts,v,cb){return`<select class="prop-sel" id="${id}" onchange="${cb}">${opts.map(o=>{const val=typeof o==='string'?o:o.v,lbl=typeof o==='string'?o:o.l;return`<option value="${val}"${val===String(v)?' selected':''}>${lbl}</option>`}).join('')}</select>`}
+function DS(id,v,cb){
+  const dps=(state.profile?state.profile.dataPoints:[]).map(d=>({v:d.id,l:d.id}));
+  state.workingProfile.dataPoints.forEach(d=>{if(!dps.find(x=>x.v===d.id))dps.push({v:d.id,l:d.id+' ✦'})});
+  dps.unshift({v:'',l:'— none —'});
+  return S(id,dps,v,cb);
+}
+
+function renderPropsPanel(w) {
+  const el=document.getElementById('widget-props');
+  if(!w){el.innerHTML='<p class="no-sel">← Add a widget from the Design tab, then click it to edit its properties.</p>';return}
+  const c=w.cfg;
+  let h=`<div class="prop-sec"><div class="prop-ttl">${WTYPES[w.type].label}</div>`;
+  h+=`<div class="prop-2">${R('X',I('p-x',w.x,`wP('x',+this.value)`))}${R('Y',I('p-y',w.y,`wP('y',+this.value)`))}</div>`;
+  h+=`<div class="prop-2">${R('W',I('p-w',w.w,`wP('w',+this.value)`))}${R('H',I('p-h',w.h,`wP('h',+this.value)`))}</div>`;
+  h+='<hr class="prop-sep">';
+  switch(w.type){
+    case 'bar':
+      h+=R('Label',I('c0',c.label,`cP('label',this.value)`))+R('Data Point',DS('c1',c.dp,`cP('dp',this.value)`))+R('Max Data Point',DS('c2',c.maxDp,`cP('maxDp',this.value)`))+R('Max Value',I('c3',c.maxVal,`cP('maxVal',+this.value)`,'number'))+R('Fill Color',I('c4',c.fill,`cP('fill',this.value)`,'color'))+R('Bar Height px',I('c5',c.bh,`cP('bh',+this.value)`,'number'));
+      break;
+    case 'number':
+      h+=R('Label',I('c0',c.label,`cP('label',this.value)`))+R('Data Point',DS('c1',c.dp,`cP('dp',this.value)`))+R('Prefix',I('c2',c.pfx,`cP('pfx',this.value)`))+R('Suffix',I('c3',c.sfx,`cP('sfx',this.value)`))+R('Decimals',I('c4',c.dec,`cP('dec',+this.value)`,'number'))+R('Font Size',I('c5',c.fs,`cP('fs',+this.value)`,'number'))+R('Color',I('c6',c.color,`cP('color',this.value)`,'color'));
+      break;
+    case 'stars':
+      h+=R('Data Point',DS('c0',c.dp,`cP('dp',this.value)`))+R('Max Stars',I('c1',c.count,`cP('count',+this.value)`,'number','min=1 max=12'))+R('Star Size',I('c2',c.sz,`cP('sz',+this.value)`,'number'))+R('Active Color',I('c3',c.onC,`cP('onC',this.value)`,'color'))+R('Inactive Color',I('c4',c.offC,`cP('offC',this.value)`,'color'));
+      break;
+    case 'text':
+      h+=R('Text',I('c0',c.text,`cP('text',this.value)`))+R('Font Size',I('c1',c.fs,`cP('fs',+this.value)`,'number'))+R('Color',I('c2',c.color,`cP('color',this.value)`,'color'))+R('Bold',S('c3',[{v:'false',l:'No'},{v:'true',l:'Yes'}],String(c.bold),`cP('bold',this.value==='true')`));
+      break;
+    case 'minimap':
+      h+=R('X Data Point',DS('c0',c.xDp,`cP('xDp',this.value)`))+R('Y Data Point',DS('c1',c.yDp,`cP('yDp',this.value)`))+R('Heading Point',DS('c2',c.hDp,`cP('hDp',this.value)`))+R('Trail Color',I('c3',c.trail,`cP('trail',this.value)`,'color'))+R('Dot Color',I('c4',c.dot,`cP('dot',this.value)`,'color'))+R('World Min',I('c5',c.wMin,`cP('wMin',+this.value)`,'number'))+R('World Max',I('c6',c.wMax,`cP('wMax',+this.value)`,'number'));
+      break;
+    case 'scanner':
+      h+=R('Title',I('c0',c.title,`cP('title',this.value)`))+`<p style="font-size:10px;color:#666;line-height:1.5;margin-top:4px">The scanner widget lets players search for memory values directly within EmuLnk. It calls the HTTP scanner on port 55356.</p>`;
+      break;
+    case 'editor':
+      h+=R('Label',I('c0',c.label,`cP('label',this.value)`))+R('Data Point',DS('c1',c.dp,`cP('dp',this.value)`))+R('Address',I('c2',c.addr,`cP('addr',this.value)`))+R('Type',S('c3',[{v:'u32_le',l:'u32'},{v:'u16_le',l:'u16'},{v:'u8',l:'u8'},{v:'float_le',l:'float'}],c.typeStr,`cP('typeStr',this.value)`))+`<p style="font-size:10px;color:#666;line-height:1.5;margin-top:4px">The editor widget shows the live value at an address and lets the player write a new value. Use the Scanner to find the address first.</p>`;
+      break;
+    case 'image':
+      h+=R('Image URL',I('c0',c.src,`cP('src',this.value)`))
+        +R('Fit',S('c1',[{v:'cover',l:'Cover (crop)'},{v:'contain',l:'Contain (fit)'},{v:'fill',l:'Fill (stretch)'}],c.fit,`cP('fit',this.value)`))
+        +R('Corner Radius',I('c2',c.radius,`cP('radius',+this.value)`,'number'))
+        +R('Opacity',I('c3',c.opacity,`cP('opacity',+this.value)`,'number','step=0.05 min=0 max=1'))
+        +`<p style="font-size:10px;color:#666;line-height:1.5;margin-top:4px">Drop a URL or click <b style="color:#FF8C00">⚡SteamGridDB</b> in the Scanner tab to fetch hero/grid art automatically.</p>`;
+      break;
+  }
+  h+=`<hr class="prop-sep"><button class="del-btn" onclick="removeWidget('${w.id}')">🗑 Delete Widget</button></div>`;
+  el.innerHTML=h;
+}
+function wP(k,v){const w=state.widgets.find(x=>x.id===state.selected);if(!w)return;w[k]=v;const el=document.getElementById(w.id);if(k==='x')el.style.left=v+'px';if(k==='y')el.style.top=v+'px';if(k==='w')el.style.width=v+'px';if(k==='h')el.style.height=v+'px'}
+function cP(k,v){const w=state.widgets.find(x=>x.id===state.selected);if(!w)return;w.cfg[k]=v;renderWidget(w);document.getElementById(w.id).classList.add('selected')}
+
+/* ═══════════════════════════════════════════════════════
+   DEMO LOOP
+═══════════════════════════════════════════════════════ */
+let dT=0,dX=-200,dY=300,dH=0.5;
+const mmT={};
+function startDemo(){
+  setInterval(()=>{
+    dT++;dX+=Math.cos(dH)*4;dY+=Math.sin(dH)*4;if(dT%25===0)dH+=0.3;
+    const demo={
+      /* GTA San Andreas */
+      money:49873+dT*11, health:60+30*Math.sin(dT*.04), max_health:100,
+      armor:50+20*Math.sin(dT*.03), wanted_level:Math.floor((Math.sin(dT*.025)+1)*3),
+      weapon_slot:4, weapon_ammo_clip:12, weapon_ammo_total:45,
+      vehicle_health:800+100*Math.sin(dT*.02),
+      stamina:500+200*Math.sin(dT*.02), muscle:600, fat:200, respect:700,
+      pos_x:dX, pos_y:dY, heading:dH,
+      /* Dark Cloud 2 */
+      gilda:12340+dT*7, current_hp:60+30*Math.sin(dT*.04), max_hp:100,
+      monica_hp:55+25*Math.sin(dT*.05), ridepod_fuel:75+15*Math.sin(dT*.04), floor_number:3,
+      /* NFS Underground 2 */
+      bank_money:32100, nitrous:8000+1500*Math.sin(dT*.05),
+      speed:80+40*Math.sin(dT*.06), gear:3, rpm:4500+1000*Math.sin(dT*.07),
+    };
+    state.widgets.forEach(w=>demoUpdate(w,demo));
+  },120);
+}
+function demoUpdate(w,d){
+  const el=document.getElementById(w.id);if(!el)return;
+  const c=w.cfg;
+  switch(w.type){
+    case 'bar':{const v=d[c.dp]??75,mx=(c.maxDp&&d[c.maxDp])||c.maxVal,p=Math.min(v/mx,1);const f=el.querySelector('.wg-bar-fill');if(f)f.style.width=(p*100).toFixed(1)+'%';const lv=el.querySelector('.wg-bar-lbl span:last-child');if(lv)lv.textContent=Math.round(v)+'/'+Math.round(mx);break}
+    case 'number':{const v=d[c.dp]??1234;const n=el.querySelector('.wg-num-val');if(n)n.textContent=c.pfx+(c.dec>0?v.toFixed(c.dec):Math.floor(v).toLocaleString('en-US'))+c.sfx;break}
+    case 'stars':{const v=Math.floor(d[c.dp]??3);el.querySelectorAll('.wg-star').forEach((s,i)=>s.style.background=i<v?c.onC:c.offC);break}
+    case 'minimap':{const cv=el.querySelector('canvas');if(!cv)break;const x=d[c.xDp]??dX,y=d[c.yDp]??dY,h=d[c.hDp]??dH;drawMM(cv,x,y,h,c);break}
+  }
+}
+function drawMM(cv,x,y,h,c){
+  const id=cv.id;if(!mmT[id])mmT[id]=[];const tr=mmT[id];tr.push({x,y});if(tr.length>70)tr.shift();
+  const sz=cv.width,sp=c.wMax-c.wMin,wx=v=>((v-c.wMin)/sp)*sz,wy=v=>sz-((v-c.wMin)/sp)*sz;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,sz,sz);ctx.save();ctx.beginPath();ctx.arc(sz/2,sz/2,sz/2-1,0,Math.PI*2);ctx.clip();ctx.fillStyle='#0A1208';ctx.fillRect(0,0,sz,sz);
+  if(tr.length>1){ctx.strokeStyle=c.trail+'55';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(wx(tr[0].x),wy(tr[0].y));tr.forEach(p=>ctx.lineTo(wx(p.x),wy(p.y)));ctx.stroke()}
+  const px=wx(x),py=wy(y);ctx.fillStyle=c.dot;ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
+  if(h!=null){ctx.strokeStyle=c.dot;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+10*Math.sin(h),py-10*Math.cos(h));ctx.stroke()}
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCANNER (calls port 55356 on the device)
+═══════════════════════════════════════════════════════ */
+let scBase='', scPage_=0, scConnected=false, scHasResults=false;
+let pinTarget=null; // { addr, val }
+
+function scUrl(path){ return `http://${document.getElementById('sc-ip').value.trim()}:${document.getElementById('sc-port').value.trim()}${path}`; }
+
+async function scFetch(path){
+  const r=await fetch(scUrl(path),{signal:AbortSignal.timeout(3000)});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+/**
+ * Test the scanner connection, auto-fill the game ID from /data response,
+ * and trigger the known-addresses panel refresh.
+ */
+async function scConnect(){
+  const dot=document.getElementById('sc-dot'), st=document.getElementById('sc-status');
+  try {
+    const d=await scFetch('/data');
+    dot.className='conn-dot ok';
+    const gameLabel=d.serial||'no game loaded';
+    st.textContent='Connected — '+gameLabel;
+    scConnected=true;
+    // auto-fill game ID if not set
+    if(d.serial && !state.meta.gameId){
+      document.getElementById('m-gameid').value=d.serial;
+      onGameId(d.serial);  // this calls renderKnownAddrs + kaReadAll
+    } else {
+      renderKnownAddrs((d.serial||state.meta.gameId||'').toUpperCase());
+      setTimeout(kaReadAll,100);
+    }
+    toast('Scanner connected' + (d.serial?' — '+d.serial:''));
+  } catch(e){
+    dot.className='conn-dot err'; st.textContent='Failed: '+e.message; scConnected=false;
+  }
+}
+
+/* ── On-device localhost auto-connect ──
+   If the page is opened on a device (not a desktop browser), try 127.0.0.1 first */
+async function tryLocalConnect(){
+  const ipEl=document.getElementById('sc-ip');
+  // Only try if IP is still the default placeholder
+  if(ipEl.value!=='192.168.1.100') return;
+  try{
+    const r=await fetch('http://127.0.0.1:55356/data',{signal:AbortSignal.timeout(800)});
+    if(r.ok){
+      ipEl.value='127.0.0.1';
+      const dot=document.getElementById('sc-dot'),st=document.getElementById('sc-status');
+      const statusEl=dot.parentElement;
+      // Inject on-device badge
+      if(!document.getElementById('on-dev-badge')){
+        const badge=document.createElement('span');
+        badge.id='on-dev-badge';badge.className='on-device-badge';badge.innerHTML='📱 On-Device';
+        statusEl.after(badge);
+      }
+      await scConnect();
+    }
+  }catch{/* desktop — silent fail */}
+}
+
+/** Start a new scan.  Sends GET /scan?value=&size= to the device scanner. */
+async function scScan(){
+  const v=document.getElementById('sc-val').value.trim(); if(!v){toast('Enter a value to scan');return}
+  const sz=document.getElementById('sc-type').value;
+  const btn=document.getElementById('sc-scan-btn'); btn.disabled=true; btn.textContent='…';
+  try{
+    const floatVal = sz==='f' ? parseFloat(v) : parseInt(v);
+    const apiSz = sz==='f' ? 4 : parseInt(sz);
+    const d=await scFetch(`/scan?value=${floatVal}&size=${apiSz}&type=${sz==='f'?'float':'int'}`);
+    scHasResults=true; scPage_=0;
+    document.getElementById('sc-count').textContent=`${d.count.toLocaleString()} results${d.capped?' (capped)':''}`;
+    ['f-val','f-chg','f-unch'].forEach(id=>document.getElementById(id).disabled=false);
+    await scLoadResults();
+  }catch(e){toast('Scan error: '+e.message)}
+  btn.disabled=false; btn.textContent='Scan';
+}
+
+async function scFilter(){const v=document.getElementById('sc-val').value.trim();await scFetch(`/filter?value=${v}`);await scLoadResults();}
+async function scChanged(){await scFetch('/filter_changed');await scLoadResults();}
+async function scUnchanged(){await scFetch('/filter_unchanged');await scLoadResults();}
+function scReset(){scHasResults=false;scPage_=0;document.getElementById('sc-results').innerHTML='<span style="color:#333;font-size:10px;padding:8px;display:block;text-align:center">Scan reset.</span>';document.getElementById('sc-count').textContent='—';document.getElementById('sc-pager').style.display='none';['f-val','f-chg','f-unch'].forEach(id=>document.getElementById(id).disabled=true)}
+function scPage(d){scPage_=Math.max(0,scPage_+d);scLoadResults()}
+
+async function scLoadResults(){
+  try{
+    const d=await scFetch(`/results?page=${scPage_}`);
+    const el=document.getElementById('sc-results');
+    document.getElementById('sc-count').textContent=`${d.count.toLocaleString()} results`;
+    document.getElementById('sc-pager').style.display=d.count>100?'flex':'none';
+    const pages=Math.ceil(d.count/100)||1;
+    document.getElementById('sc-page-lbl').textContent=`${scPage_+1} / ${pages}`;
+    if(!d.results.length){el.innerHTML='<span style="color:#555;font-size:10px;padding:8px;display:block;text-align:center">No results.</span>';return}
+    const serial=state.meta.gameId.toUpperCase();
+    const knownDB=KNOWN_ADDRS[serial]||[];
+    el.innerHTML=d.results.map(r=>{
+      const ka=knownDB.find(k=>k.addr===r.addr);
+      const valMatch=ka&&ka.min!=null&&r.val>=ka.min&&r.val<=ka.max;
+      const knownBadge=ka?`<span class="res-known" title="${esc(ka.hint||ka.label)}">${esc(ka.label)}</span>`:'';
+      const typeArg=ka?ka.type:'u32';
+      const safeLabel=ka?ka.label.replace(/['"\\]/g,''):'';
+      const checkBtn=valMatch
+        ?`<button class="res-chk" title="✓ Matches expected range for ${safeLabel} — click to confirm &amp; pin!" onclick="kaConfirmResult(${r.addr},${r.val},'${ka.id}','${safeLabel}','${typeArg}')">✓</button>`
+        :'';
+      return `<div class="res-item">
+        <span class="res-addr">0x${r.addr.toString(16).padStart(8,'0').toUpperCase()}</span>
+        ${knownBadge}
+        <span class="res-val">${r.val}</span>
+        ${checkBtn}
+        <button class="res-pin" onclick="openPinModal(${r.addr},${r.val})">Pin</button>
+        <button class="res-write" onclick="quickWrite(${r.addr})">Edit</button>
+      </div>`;
+    }).join('');
+  }catch(e){toast('Results error: '+e.message)}
+}
+
+/* Quick write from results row */
+function quickWrite(addr){
+  const hex='0x'+addr.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('ed-addr').value=hex;
+  switchTab('scanner');
+  document.getElementById('ed-val').focus();
+  toast('Address loaded into Editor below ↓');
+}
+
+/* Direct editor */
+async function edRead(){
+  const addr=document.getElementById('ed-addr').value.trim();
+  const sz=document.getElementById('ed-type').value;
+  const apiSz=sz==='f'?4:parseInt(sz);
+  try{
+    const d=await scFetch(`/read?addr=${parseInt(addr,16)}&size=${apiSz}`);
+    document.getElementById('ed-val').value=d.val;
+    document.getElementById('ed-result').textContent=`Read: ${d.val}  (0x${d.val.toString(16).toUpperCase()})`;
+    document.getElementById('ed-result').style.color='#4DFF91';
+  }catch(e){document.getElementById('ed-result').textContent='Error: '+e.message;document.getElementById('ed-result').style.color='#ff6b6b'}
+}
+async function edWrite(){
+  const addr=parseInt(document.getElementById('ed-addr').value.trim(),16);
+  const val=parseFloat(document.getElementById('ed-val').value);
+  const sz=document.getElementById('ed-type').value;
+  const apiSz=sz==='f'?4:parseInt(sz);
+  try{
+    const d=await scFetch(`/write?addr=${addr}&size=${apiSz}&value=${val}`);
+    document.getElementById('ed-result').textContent=d.ok?'✓ Written':'✗ Write failed';
+    document.getElementById('ed-result').style.color=d.ok?'#4DFF91':'#ff6b6b';
+    toast(d.ok?'Value written!':'Write failed');
+  }catch(e){document.getElementById('ed-result').textContent='Error: '+e.message}
+}
+
+/**
+ * Neighbour analyser.
+ * Reads 64 bytes centred on the address in the Direct Editor field (±32 bytes)
+ * and displays each 4-byte word as u32, float, u16, u8 — useful for spotting
+ * adjacent fields (e.g. clip ammo at base+4, total ammo at base+8).
+ */
+async function scNeighbours(){
+  const addrStr=document.getElementById('ed-addr').value.trim(); if(!addrStr){toast('Enter an address first');return}
+  const base=parseInt(addrStr,16)-32;
+  const area=document.getElementById('nbr-area');
+  area.innerHTML='<span style="color:#555;font-size:9px">Reading…</span>';
+  try{
+    // Read 64 bytes in u8 chunks
+    const vals=[];
+    for(let i=0;i<16;i++){
+      const d=await scFetch(`/read?addr=${base+i*4}&size=4`);
+      vals.push(d.val>>>0);
+    }
+    let rows='<table class="nbr-table"><thead><tr><th>Offset</th><th>u32</th><th>float</th><th>u16</th><th>u8</th></tr></thead><tbody>';
+    vals.forEach((v32,i)=>{
+      const off=(i*4-32),offStr=(off>=0?'+':'')+off;
+      const fv=new Float32Array(new Uint32Array([v32]).buffer)[0];
+      const u16=v32&0xFFFF, u8=v32&0xFF;
+      const addr=(base+i*4);
+      const addrHex='0x'+addr.toString(16).padStart(8,'0').toUpperCase();
+      const fStr=Math.abs(fv)<1e6&&Math.abs(fv)>1e-6?fv.toFixed(2):fv.toExponential(1);
+      rows+=`<tr onclick="document.getElementById('ed-addr').value='${addrHex}'" style="cursor:pointer" title="${addrHex}"><td>${offStr}</td><td>${v32}</td><td>${fStr}</td><td>${u16}</td><td>${u8}</td></tr>`;
+    });
+    rows+='</tbody></table><div style="font-size:9px;color:#444;margin-top:4px">Click row to load address into editor</div>';
+    area.innerHTML=rows;
+  }catch(e){area.innerHTML='<span style="color:#ff6b6b;font-size:9px">'+e.message+'</span>'}
+}
+
+/* ── Watch list (live polling) ── */
+const watchList=[];
+setInterval(async()=>{
+  if(!scConnected||!watchList.length)return;
+  for(const w of watchList){
+    try{const d=await scFetch(`/read?addr=${w.addr}&size=${w.size}`);w.val=d.val;renderWatchList()}catch{}
+  }
+},300);
+
+function renderWatchList(){
+  const el=document.getElementById('watch-list');
+  if(!watchList.length){el.innerHTML='<span style="color:#333;font-size:10px">Pin an address to watch live.</span>';return}
+  el.innerHTML=watchList.map((w,i)=>`
+    <div class="watch-item">
+      <span class="watch-name" title="0x${w.addr.toString(16).toUpperCase()}">${w.name}</span>
+      <span class="watch-val">${w.val??'—'}</span>
+      <span class="watch-rm" onclick="watchList.splice(${i},1);renderWatchList()">✕</span>
+    </div>`).join('');
+}
+
+/* ── Pin modal ──────────────────────────────────────────────────────────────
+   Opens the "Pin Address to Profile" modal.
+   The user assigns an ID, label, and type, then optionally places a widget.
+   On confirm, the address is added to workingProfile.dataPoints so it can
+   be referenced by widgets and included in the exported profile.json.
+   ────────────────────────────────────────────────────────────────────────── */
+function openPinModal(addr,val){
+  pinTarget={addr,val};
+  document.getElementById('pin-addr-lbl').textContent='0x'+addr.toString(16).padStart(8,'0').toUpperCase()+' = '+val;
+  document.getElementById('pin-id').value='';
+  document.getElementById('pin-name').value='';
+  document.getElementById('pin-modal').classList.add('show');
+  document.getElementById('pin-id').focus();
+}
+function closePinModal(){document.getElementById('pin-modal').classList.remove('show');pinTarget=null}
+function confirmPin(){
+  if(!pinTarget)return;
+  const id=document.getElementById('pin-id').value.trim();
+  const name=document.getElementById('pin-name').value.trim()||id;
+  const type=document.getElementById('pin-type').value;
+  const sz=type.startsWith('float')?4:type.endsWith('u8')?1:type.endsWith('u16')?2:4;
+  if(!id){toast('Enter a data point ID');return}
+  // Add to working profile
+  const dp={id,desc:name,type,size:sz,addr:'0x'+pinTarget.addr.toString(16).padStart(8,'0').toUpperCase()};
+  state.workingProfile.dataPoints=state.workingProfile.dataPoints.filter(x=>x.id!==id);
+  state.workingProfile.dataPoints.push(dp);
+  // Add to watch list
+  if(!watchList.find(w=>w.addr===pinTarget.addr))
+    watchList.push({addr:pinTarget.addr,name,size:sz,val:pinTarget.val});
+  renderWatchList();
+  renderDpList();
+  const addWidget=document.getElementById('pin-widget').checked;
+  closePinModal();
+  if(addWidget){
+    // Guess best widget type
+    const isFloat=type.startsWith('float');
+    const isSmall=sz<=2&&!isFloat;
+    const wtype = isSmall ? 'number' : 'bar';
+    addWidgetWithDp(wtype, id, name);
+  }
+  toast(id+' pinned to profile');
+}
+function addWidgetWithDp(type, dpId, label){
+  const d=WTYPES[type];
+  const w={id:'w'+(state.nextId++),type,x:Math.round((CW-d.dW)/2),y:Math.round((CH-d.dH)/2),w:d.dW,h:d.dH,cfg:{...d.cfg}};
+  w.cfg.dp=dpId; w.cfg.label=label.toUpperCase();
+  state.widgets.push(w); renderWidget(w); selectWidget(w.id); renderDpList();
+  switchTab('design');
+}
+
+/* ═══════════════════════════════════════════════════════
+   IMPORT / EXPORT
+═══════════════════════════════════════════════════════ */
+function clearCanvas(){if(state.widgets.length&&!confirm('Clear canvas?'))return;state.widgets=[];state.selected=null;document.getElementById('canvas').innerHTML='';renderPropsPanel(null);renderDpList()}
+function importTheme(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const j=JSON.parse(ev.target.result);if(j.id){state.meta.id=j.id;document.getElementById('m-id').value=j.id}if(j.meta?.name){state.meta.name=j.meta.name;document.getElementById('m-name').value=j.meta.name}if(j.targetConsole){state.meta.console=j.targetConsole;document.getElementById('m-con').value=j.targetConsole}if(j.targetProfileId){state.meta.profileId=j.targetProfileId;document.getElementById('m-prof').value=j.targetProfileId}toast('Imported metadata')}catch{toast('Invalid JSON')}};r.readAsText(f)};inp.click();
+}
+
+/**
+ * Build and download the theme ZIP using the inline zipBlob() builder.
+ * No external dependencies — works offline, file://, or any HTTP server.
+ *
+ * Output matches the official emulnk-repo layout so the ZIP can be
+ * committed directly into a fork of github.com/EmuLnk/emulnk-repo:
+ *
+ *   themes/<console>/<profileId>/<themeId>/
+ *     theme.json      ← EmuLnk theme manifest
+ *     index.html      ← HUD page (runs in EmuLnk WebView)
+ *   profiles/
+ *     <profileId>.json ← memory profile (if addresses were pinned)
+ *   README.txt
+ */
+function exportTheme(){
+  if(!state.widgets.length){toast('Add widgets before exporting');return}
+  const con  = state.meta.console  || 'PS2';
+  const prof = state.meta.profileId|| state.meta.id;
+  const id   = state.meta.id;
+  const themeDir = `themes/${con}/${prof}/${id}`;
+  const files = [
+    { name:`${themeDir}/theme.json`, data:JSON.stringify(buildThemeJson(),null,2) },
+    { name:`${themeDir}/index.html`, data:buildThemeHtml() },
+    { name:`README.txt`,             data:buildReadme() },
+  ];
+  if(state.workingProfile.dataPoints.length || !state.profile)
+    files.push({ name:`profiles/${prof}.json`, data:JSON.stringify(buildProfileJson(),null,2) });
+  dl(id+'.zip', zipBlob(files), 'application/zip');
+  toast('Exported '+id+'.zip  (emulnk-repo layout)');
+}
+
+function dl(name,content,type){
+  const a=document.createElement('a');a.href=URL.createObjectURL(content instanceof Blob?content:new Blob([content],{type}));a.download=name.split('/').pop();a.click();
+}
+
+/** Build the EmuLnk theme.json manifest object from current state. */
+function buildThemeJson(){
+  const settings=[];
+  if(state.widgets.some(w=>w.type==='minimap')) settings.push({id:'show_minimap',label:'Show Minimap',type:'toggle',default:'true'});
+  return {id:state.meta.id,type:'theme',targetProfileId:state.meta.profileId||state.meta.id,targetConsole:state.meta.console,
+    meta:{name:state.meta.name,author:state.meta.author||'unknown',version:'1.0.0',description:state.meta.description||state.meta.name+' HUD',minAppVersion:1,credits:[state.meta.author?state.meta.author+': theme design':'EmuLnk Theme Builder']},
+    hideOverlay:false,settings};
+}
+
+/**
+ * Build a profile.json from pinned addresses.
+ * Merges preset data points with working-profile pins.
+ * Each pinned address gets its own bundle with the disc serial as the key.
+ * offset is always 0x0 — all pinned addresses are exact absolute EE addresses.
+ */
+function buildProfileJson(){
+  const base=state.profile||{};
+  const existing=base.dataPoints||[];
+  const extra=state.workingProfile.dataPoints;
+  const all=[...existing,...extra.filter(d=>!existing.find(x=>x.id===d.id))];
+  const bundles={};
+  extra.forEach(dp=>{
+    if(dp.addr) bundles[dp.id]={base:{[state.meta.gameId||'UNKNOWN']:dp.addr},pollRate:'high'};
+  });
+  return {id:state.meta.profileId||state.meta.id,name:state.meta.name,platform:state.meta.console,
+    gameIds:state.meta.gameId?[state.meta.gameId]:[],
+    bundles:{...bundles},dataPoints:all.map(dp=>({id:dp.id,description:dp.desc||dp.description||'',type:dp.type||'u32_le',size:dp.size||4,bundle:dp.id,offset:'0x0',stable:false}))};
+}
+
+/**
+ * Generate the full index.html for the exported theme.
+ * Iterates all canvas widgets, generates per-widget HTML/CSS/JS snippets,
+ * then splices them into the HTPL template.
+ * The generated page is standalone: it only needs EmuLnk's updateData(b64) call.
+ */
+function buildThemeHtml(){
+  const cssBlocks=[],htmlBlocks=[],jsBlocks=[],refs=[];
+  state.widgets.forEach(w=>{const g=genWidget(w);cssBlocks.push(g.css);htmlBlocks.push(g.html);if(g.js)jsBlocks.push(g.js);refs.push(...g.refs)});
+  const hasMap=state.widgets.some(w=>w.type==='minimap');
+  const hasSc=state.widgets.some(w=>w.type==='scanner');
+  const hasEd=state.widgets.some(w=>w.type==='editor');
+  const domRefs=refs.map(r=>`const ${r.n}=document.getElementById('${r.i}');`).join('\n  ');
+  return HTPL.replace('{{TITLE}}',esc(state.meta.name)).replace('{{WCSS}}',cssBlocks.join('\n')).replace('{{WHTML}}',htmlBlocks.join('\n')).replace('{{DREFS}}',domRefs).replace('{{UJS}}',jsBlocks.join('\n  ')).replace('{{MMFN}}',hasMap?MM_FN:'').replace('{{SCFN}}',hasSc||hasEd?SC_FN:'').replace('{{DEMO}}',buildDemo());
+}
+
+/**
+ * Generate static HTML + inline JS for one widget as it will appear in the exported theme.
+ * Returns { css, html, js, refs } where:
+ *   html — absolute-positioned HTML fragment
+ *   js   — snippet executed every updateData() call to update the widget's live values
+ *   refs — [ {n: varName, i: elementId} ] DOM references to pre-cache at load time
+ */
+function genWidget(w){
+  const c=w.cfg,id=w.id,pos=`position:absolute;left:${w.x}px;top:${w.y}px;width:${w.w}px;`;
+  switch(w.type){
+    case 'bar':{
+      const mx=c.maxDp?`(v['${c.maxDp}']??${c.maxVal})`:`${c.maxVal}`;
+      return{css:'',html:`\n    <div id="${id}" style="${pos}">
+      <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:#888;text-transform:uppercase;margin-bottom:2px"><span>${esc(c.label)}</span><span id="${id}_v">—</span></div>
+      <div style="height:${c.bh}px;background:#1e1e1e;border-radius:2px;overflow:hidden"><div id="${id}_f" style="height:100%;border-radius:2px;background:${c.fill};width:0%;transition:width .15s"></div></div>
+    </div>`,js:`{const v_=${c.dp?`v['${c.dp}']`:0}??0,mx_=${mx};const p=Math.min(v_/(mx_||1),1);${id}_f.style.width=(p*100).toFixed(1)+'%';${id}_v.textContent=Math.round(v_)+' / '+Math.round(mx_);}`,refs:[{n:`${id}_f`,i:`${id}_f`},{n:`${id}_v`,i:`${id}_v`}]};
+    }
+    case 'number':{
+      const fmt=c.dec>0?`'${c.pfx}'+val.toFixed(${c.dec})+'${c.sfx}'`:`'${c.pfx}'+Math.floor(val).toLocaleString('en-US')+'${c.sfx}'`;
+      return{css:'',html:`\n    <div id="${id}" style="${pos}height:${w.h}px"><div style="font-size:9px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px">${esc(c.label)}</div><div id="${id}_v" style="font-size:${c.fs}px;font-weight:900;color:${c.color};line-height:1">—</div></div>`,js:`{const val=v['${c.dp}'];${id}_v.textContent=val!=null?${fmt}:'—';}`,refs:[{n:`${id}_v`,i:`${id}_v`}]};
+    }
+    case 'stars':{
+      const st=Array.from({length:c.count},(_,i)=>`<div id="${id}_s${i}" style="width:${c.sz}px;height:${c.sz}px;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:${c.offC};transition:background .15s"></div>`).join('');
+      const jl=Array.from({length:c.count},(_,i)=>`${id}_s${i}.style.background=n>${i}?'${c.onC}':'${c.offC}';`).join('');
+      return{css:'',html:`\n    <div style="${pos}display:flex;gap:3px">${st}</div>`,js:`{const n=Math.floor(v['${c.dp}']??0);${jl}}`,refs:Array.from({length:c.count},(_,i)=>({n:`${id}_s${i}`,i:`${id}_s${i}`}))};
+    }
+    case 'text': return{css:'',html:`\n    <div style="${pos}font-size:${c.fs}px;color:${c.color};font-weight:${c.bold?700:400};white-space:nowrap">${esc(c.text)}</div>`,js:'',refs:[]};
+    case 'minimap':{const sz=Math.min(w.w,w.h);return{css:'',html:`\n    <canvas id="${id}_cv" width="${sz}" height="${sz}" style="position:absolute;left:${w.x}px;top:${w.y}px;border-radius:50%;border:2px solid #2a2a2a;background:#0a0f0a"></canvas>`,js:`drawMM(${id}_cv,v['${c.xDp}'],v['${c.yDp}'],v['${c.hDp}'],'${c.trail}','${c.dot}',${c.wMin},${c.wMax});`,refs:[{n:`${id}_cv`,i:`${id}_cv`}]};}
+    case 'scanner': return{css:'',html:SCANNER_WIDGET_HTML.replace(/\{\{WID\}\}/g,id).replace('{{TITLE}}',esc(c.title)),js:'',refs:[]};
+    case 'editor':{
+      const addrNum=parseInt(c.addr,16)||0;
+      const szMap={'u32_le':4,'u16_le':2,'u8':1,'float_le':4,'s32_le':4};
+      const sz=szMap[c.typeStr]||4;
+      return{css:'',html:EDITOR_WIDGET_HTML.replace(/\{\{WID\}\}/g,id).replace('{{POS}}',pos).replace('{{H}}',w.h+'px').replace('{{LABEL}}',esc(c.label)).replace('{{ADDR}}',c.addr||'0x0').replace('{{ADDR_NUM}}',addrNum).replace('{{SZ}}',sz),js:`{const rv=v['${c.dp||''}'];if(rv!=null){${id}_dv.textContent=rv;}}`,refs:[{n:`${id}_dv`,i:`${id}_dv`}]};
+    }
+    case 'image':{
+      /* Inline as <img> with the URL baked in.  EmuLnk can serve remote URLs;
+         users can also data:URI an image into the src field for fully offline themes. */
+      const src=esc(c.src||'');
+      return{css:'',html:`\n    <img src="${src}" style="${pos}height:${w.h}px;object-fit:${c.fit};border-radius:${c.radius}px;opacity:${c.opacity};display:block">`,js:'',refs:[]};
+    }
+  }
+  return{css:'',html:'',js:'',refs:[]};
+}
+
+/**
+ * Build the static demo object embedded in the exported theme for offline preview.
+ * We pick a plausible default per known data-point ID so the HUD looks sensible
+ * in the file:// preview; the exported theme replaces this with real updateData() calls.
+ */
+const DEMO_DEFAULTS = {
+  money:75000, health:85, max_health:100, armor:50, wanted_level:2,
+  weapon_slot:4, weapon_ammo_clip:12, weapon_ammo_total:45,
+  stamina:600, muscle:400, fat:200, respect:750,
+  vehicle_health:800, gear:3, rpm:4500, speed:80,
+  bank_money:32000, nitrous:6000,
+  current_hp:80, max_hp:100, monica_hp:65, gilda:12340, ridepod_fuel:75, floor_number:3,
+};
+function buildDemo(){
+  const ids=new Set(state.widgets.flatMap(w=>[w.cfg.dp,w.cfg.maxDp,w.cfg.xDp,w.cfg.yDp,w.cfg.hDp].filter(Boolean)));
+  return '{'+[...ids].map(id=>`'${id}':${DEMO_DEFAULTS[id]??50}`).join(',')+'}';
+}
+
+function buildReadme(){
+  const con  = state.meta.console   || 'PS2';
+  const prof = state.meta.profileId || state.meta.id;
+  const id   = state.meta.id;
+  return `EmuLnk Theme: ${state.meta.name}
+Generated by EmuLnk Theme Builder
+https://github.com/elbardacus/emulink-nethersx2-ps2
+
+Game   : ${state.meta.gameId||'(not set)'}
+Profile: ${prof}
+Author : ${state.meta.author||'unknown'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPTION A — commit to emulnk-repo fork
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This ZIP mirrors the official EmuLnk/emulnk-repo folder layout.
+Simply extract it into your fork of github.com/EmuLnk/emulnk-repo:
+
+  themes/${con}/${prof}/${id}/theme.json
+  themes/${con}/${prof}/${id}/index.html
+  profiles/${prof}.json   (if included)
+
+Then open a PR to share your theme with the community!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPTION B — sideload directly to device
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Copy files to your Android device via ADB:
+
+  adb push themes/${con}/${prof}/${id}/ /sdcard/emulink/themes/${con}/${prof}/${id}/
+  adb push profiles/${prof}.json        /sdcard/emulink/profiles/${prof}.json
+
+Then restart EmuLnk and select the theme in-app.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Official resources
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Theme format:   https://github.com/EmuLnk/emulnk-repo/wiki/Theme-Format
+Profile format: https://github.com/EmuLnk/emulnk-repo/wiki/Profile-Format
+Community repo: https://github.com/EmuLnk/emulnk-repo
+`;
+}
+
+/* ── Generated theme HTML template ── */
+const SCANNER_WIDGET_HTML=`
+    <div id="{{WID}}" style="position:absolute;left:0;top:0;width:100%;background:#0a0a12;border:1px solid #2a2a3a;border-radius:4px;padding:8px;font-family:'Segoe UI',Arial,sans-serif">
+      <div style="font-size:8px;letter-spacing:2px;color:#555;margin-bottom:6px">{{TITLE}}</div>
+      <div style="display:flex;gap:4px;margin-bottom:5px">
+        <input id="{{WID}}_sv" style="flex:1;background:#111;border:1px solid #2a2a3a;border-radius:2px;padding:3px 6px;font-size:11px;color:#fff" placeholder="value…" type="number">
+        <select id="{{WID}}_st" style="background:#111;border:1px solid #2a2a3a;border-radius:2px;padding:3px 4px;font-size:10px;color:#aaa">
+          <option value="4">u32</option><option value="2">u16</option><option value="1">u8</option><option value="f">float</option>
+        </select>
+        <button onclick="wgScan('{{WID}}')" style="padding:3px 8px;background:#1a2a00;border:1px solid #3a5a00;border-radius:2px;font-size:10px;color:#8DF500;cursor:pointer">Scan</button>
+      </div>
+      <div style="display:flex;gap:3px;margin-bottom:5px">
+        <button onclick="wgFilter('{{WID}}')" style="flex:1;padding:2px;font-size:9px;background:#111;border:1px solid #2a2a3a;border-radius:2px;color:#888;cursor:pointer">= Val</button>
+        <button onclick="wgChanged('{{WID}}')" style="flex:1;padding:2px;font-size:9px;background:#111;border:1px solid #2a2a3a;border-radius:2px;color:#888;cursor:pointer">Changed</button>
+        <button onclick="wgUnchanged('{{WID}}')" style="flex:1;padding:2px;font-size:9px;background:#111;border:1px solid #2a2a3a;border-radius:2px;color:#888;cursor:pointer">Same</button>
+      </div>
+      <div id="{{WID}}_rc" style="font-size:9px;color:#555;margin-bottom:3px">—</div>
+      <div id="{{WID}}_rl" style="max-height:80px;overflow-y:auto;font-size:9px"></div>
+    </div>`;
+
+const EDITOR_WIDGET_HTML=`
+    <div id="{{WID}}" style="{{POS}}height:{{H}};background:#0a0a0a;border:1px solid #3a2050;border-radius:4px;padding:8px">
+      <div style="font-size:8px;letter-spacing:2px;color:#555;margin-bottom:4px">{{LABEL}}</div>
+      <div id="{{WID}}_dv" style="font-size:22px;font-weight:900;color:#BB86FC;line-height:1.1">—</div>
+      <div style="font-size:8px;color:#444;font-family:monospace;margin-bottom:5px">{{ADDR}}</div>
+      <div style="display:flex;gap:4px">
+        <input id="{{WID}}_nv" style="flex:1;background:#111;border:1px solid #3a2050;border-radius:2px;padding:3px 6px;font-size:10px;color:#eee" placeholder="new value">
+        <button onclick="wgWrite({{ADDR_NUM}},{{SZ}},'{{WID}}_nv')" style="padding:3px 8px;background:#1a1020;border:1px solid #3a2050;border-radius:2px;font-size:10px;color:#BB86FC;cursor:pointer">Write</button>
+      </div>
+    </div>`;
+
+const SC_FN=`
+  const _SC_BASE='http://127.0.0.1:55356';
+  async function _scf(path){const r=await fetch(_SC_BASE+path,{signal:AbortSignal.timeout(2000)});return r.json();}
+  async function wgScan(wid){try{const v=document.getElementById(wid+'_sv').value,t=document.getElementById(wid+'_st').value,sz=t==='f'?4:parseInt(t);const d=await _scf('/scan?value='+v+'&size='+sz);document.getElementById(wid+'_rc').textContent=d.count+' results';wgResults(wid);}catch(e){document.getElementById(wid+'_rc').textContent='Error';}}
+  async function wgFilter(wid){try{const v=document.getElementById(wid+'_sv').value;await _scf('/filter?value='+v);wgResults(wid);}catch{}}
+  async function wgChanged(wid){try{await _scf('/filter_changed');wgResults(wid);}catch{}}
+  async function wgUnchanged(wid){try{await _scf('/filter_unchanged');wgResults(wid);}catch{}}
+  async function wgResults(wid){try{const d=await _scf('/results?page=0');document.getElementById(wid+'_rc').textContent=d.count+' results';const rl=document.getElementById(wid+'_rl');rl.innerHTML=d.results.slice(0,20).map(r=>'<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #1a1a1a"><span style="color:#666;font-family:monospace">0x'+r.addr.toString(16).toUpperCase()+'</span><span>'+r.val+'</span></div>').join('');}catch{}}
+  async function wgWrite(addr,sz,inputId){try{const v=document.getElementById(inputId).value;await _scf('/write?addr='+addr+'&size='+sz+'&value='+v);}catch{}}`;
+
+const MM_FN=`
+  const _mmt={};
+  function drawMM(cv,x,y,h,tr,dc,wMin,wMax){if(!cv||x==null||y==null)return;const id=cv.id;if(!_mmt[id])_mmt[id]=[];const trail=_mmt[id];trail.push({x,y});if(trail.length>80)trail.shift();const sz=cv.width,sp=wMax-wMin,wx=v=>((v-wMin)/sp)*sz,wy=v=>sz-((v-wMin)/sp)*sz,ctx=cv.getContext('2d');ctx.clearRect(0,0,sz,sz);ctx.save();ctx.beginPath();ctx.arc(sz/2,sz/2,sz/2-1,0,Math.PI*2);ctx.clip();ctx.fillStyle='#0A1208';ctx.fillRect(0,0,sz,sz);if(trail.length>1){ctx.strokeStyle=tr+'55';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(wx(trail[0].x),wy(trail[0].y));trail.forEach(p=>ctx.lineTo(wx(p.x),wy(p.y)));ctx.stroke()}const px=wx(x),py=wy(y);ctx.fillStyle=dc;ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();if(h!=null){ctx.strokeStyle=dc;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+10*Math.sin(h),py-10*Math.cos(h));ctx.stroke()}ctx.restore();}`;
+
+const HTPL=`<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>{{TITLE}}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#0c0c0c;color:#fff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;user-select:none}
+#root{position:relative;width:360px;height:640px;overflow:hidden}
+#offline{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);font-size:14px;color:#555;letter-spacing:3px}
+#offline.hidden{display:none}
+{{WCSS}}
+</style></head><body>
+<div id="offline">SEARCHING…</div>
+<div id="root">
+{{WHTML}}
+</div>
+<script>
+const offline=document.getElementById('offline');
+{{DREFS}}
+{{MMFN}}
+{{SCFN}}
+let _mt={};
+function updateData(b64){
+  const d=JSON.parse(atob(b64)),v=d.values||{},connected=d.isConnected;
+  offline.classList.toggle('hidden',connected);
+  if(!connected)return;
+  {{UJS}}
+}
+if(location.protocol==='file:'||location.hostname==='localhost'){
+  let _t=0,_dx=-200,_dy=300,_dh=.5;
+  setInterval(()=>{_t++;_dx+=Math.cos(_dh)*4;_dy+=Math.sin(_dh)*4;if(_t%20===0)_dh+=.3;
+    const b={{DEMO}};
+    updateData(btoa(JSON.stringify({isConnected:true,settings:{},values:{...b,pos_x:_dx,pos_y:_dy,heading:_dh,health:60+30*Math.sin(_t*.04),max_health:100,wanted_level:Math.floor((Math.sin(_t*.025)+1)*3),money:49873+_t*11}})));
+  },120);
+}
+<\/script></body></html>`;
+
+/* ═══════════════════════════════════════════════════════
+   KNOWN ADDRESSES UI
+═══════════════════════════════════════════════════════ */
+const TYPE_TO_SZ={'u32':'4','u16':'2','u8':'1','float':'f','s32':'4'};
+const TYPE_TO_PIN={'u32':'u32_le','u16':'u16_le','u8':'u8','float':'float_le','s32':'s32_le'};
+let kaLiveVals={}; /* addr(int) → live value */
+let dbOpen=true;
+
+function toggleDB(){
+  dbOpen=!dbOpen;
+  document.getElementById('db-body').className='db-body '+(dbOpen?'open':'closed');
+  document.getElementById('db-toggle').textContent=dbOpen?'▲':'▼';
+}
+
+function renderKnownAddrs(serial){
+  const el=document.getElementById('ka-list');
+  if(!serial){el.innerHTML='<span style="color:#444;font-size:10px;padding:4px 0;display:block">Set game serial or connect to populate.</span>';return;}
+  const entries=KNOWN_ADDRS[serial];
+  if(!entries||!entries.length){
+    el.innerHTML='<span style="color:#444;font-size:10px;padding:4px 0;display:block">No database entries for '+serial+'. Try ⚡RA fetch below.</span>';
+    return;
+  }
+  el.innerHTML=entries.map((ka,i)=>{
+    const hasAddr=ka.addr!=null;
+    const addrHex=hasAddr?'0x'+ka.addr.toString(16).padStart(8,'0').toUpperCase():null;
+    const live=hasAddr?kaLiveVals[ka.addr]:undefined;
+    const matched=hasAddr&&live!=null&&ka.min!=null&&live>=ka.min&&live<=ka.max;
+    const typeBadge=`<span class="ka-badge type">${esc(ka.type)}</span>`;
+    const statusBadge=hasAddr
+      ?`<span class="ka-badge confirmed">CONFIRMED</span>`
+      :`<span class="ka-badge scan">SCAN REQ</span>`;
+    return `<div class="ka-item${matched?' ka-match':''}" id="ka_${i}">
+      <div class="ka-top">
+        <span class="ka-label">${esc(ka.label)}</span>
+        ${statusBadge}${typeBadge}
+      </div>
+      ${hasAddr?`<div class="ka-addr-txt">${addrHex}${live!=null?' = <b>'+live+'</b>':''}</div>`:''}
+      <div class="ka-hint">${esc(ka.hint)}</div>
+      <div class="ka-btns">
+        <button class="ka-btn" onclick="kaScanFor(${i},'${serial}')" title="Set scan type and focus value field">🔍 Scan</button>
+        ${hasAddr?`<button class="ka-btn" onclick="kaRead(${ka.addr},'${ka.type}')" title="Read live value at this address">Read</button>`:''}
+        ${matched
+          ?`<button class="ka-chk" onclick="kaConfirmKnown(${i},'${serial}')" title="Value in expected range — click to pin!">✓ Pin!</button><span class="ka-live">${live}</span>`
+          :''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function kaScanFor(idx, serial){
+  const entries=KNOWN_ADDRS[serial];
+  if(!entries||!entries[idx]) return;
+  const ka=entries[idx];
+  document.getElementById('sc-type').value=TYPE_TO_SZ[ka.type]||'4';
+  document.getElementById('sc-val').placeholder=ka.hint.split('.')[0].replace(/^Scan /i,'').replace(/^Scan for /i,'');
+  document.getElementById('sc-val').focus();
+  toast('Type expected value for '+ka.label+', then Scan ▶');
+}
+
+async function kaRead(addr, type){
+  if(!scConnected){toast('Not connected');return;}
+  const sz=type==='float'?4:type==='u16'?2:type==='u8'?1:4;
+  try{
+    const d=await scFetch(`/read?addr=${addr}&size=${sz}`);
+    kaLiveVals[addr]=d.val;
+    renderKnownAddrs(state.meta.gameId.toUpperCase());
+    toast('Read '+('0x'+addr.toString(16).toUpperCase())+' = '+d.val);
+  }catch(e){toast('Read failed: '+e.message)}
+}
+
+async function kaReadAll(){
+  const serial=state.meta.gameId.toUpperCase();
+  const entries=KNOWN_ADDRS[serial];
+  if(!entries||!scConnected) return;
+  for(const ka of entries){
+    if(ka.addr==null) continue;
+    const sz=ka.type==='float'?4:ka.type==='u16'?2:ka.type==='u8'?1:4;
+    try{const d=await scFetch(`/read?addr=${ka.addr}&size=${sz}`);kaLiveVals[ka.addr]=d.val;}catch{}
+  }
+  renderKnownAddrs(serial);
+}
+
+function kaConfirmKnown(idx, serial){
+  const entries=KNOWN_ADDRS[serial];
+  if(!entries||!entries[idx]) return;
+  const ka=entries[idx];
+  const live=kaLiveVals[ka.addr]??0;
+  openPinModal(ka.addr, live);
+  setTimeout(()=>{
+    document.getElementById('pin-id').value=ka.id;
+    document.getElementById('pin-name').value=ka.label;
+    document.getElementById('pin-type').value=TYPE_TO_PIN[ka.type]||'u32_le';
+  },10);
+}
+
+function kaConfirmResult(addr, val, id, label, type){
+  openPinModal(addr, val);
+  setTimeout(()=>{
+    document.getElementById('pin-id').value=id;
+    document.getElementById('pin-name').value=label;
+    document.getElementById('pin-type').value=TYPE_TO_PIN[type]||'u32_le';
+  },10);
+}
+
+/* ── RetroAchievements lookup ──
+   Fetches achievement data and extracts memory addresses from MemAddr condition strings.
+   RA MemAddr format: [FLAG]TYPE_ADDR [OP] VALUE  e.g. 0xH003200=1_0xW00A2DA04!=0
+   Size flags: H=8-bit, X/h=16-bit, W=32-bit, F=float, (none)=32-bit */
+async function fetchRA(){
+  saveKeys();  /* persist on every fetch */
+  const uid=document.getElementById('ra-uid').value.trim();
+  const key=document.getElementById('ra-key').value.trim();
+  const gid=document.getElementById('ra-gid').value.trim();
+  const msg=document.getElementById('ra-msg');
+  if(!key){msg.textContent='⚠ Enter your RA API key first';msg.style.color='#FF8C00';return;}
+  if(!gid){msg.textContent='⚠ Enter RA game ID (from retroachievements.org URL)';msg.style.color='#FF8C00';return;}
+  msg.textContent='Fetching from RetroAchievements…';msg.style.color='#555';
+  try{
+    const url=`https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=${gid}&u=${uid||'guest'}&z=${uid||'guest'}&y=${key}`;
+    const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+    if(!r.ok) throw new Error('HTTP '+r.status+' — check API key and game ID');
+    const d=await r.json();
+    if(!d.Achievements){throw new Error('No achievements field returned — game ID may be wrong');}
+    const serial=state.meta.gameId.toUpperCase();
+    if(!KNOWN_ADDRS[serial]) KNOWN_ADDRS[serial]=[];
+    let added=0, achCount=Object.keys(d.Achievements).length;
+    Object.values(d.Achievements).forEach(ach=>{
+      if(!ach.MemAddr) return;
+      parseRAMemAddr(ach.MemAddr).forEach(addr=>{
+        if(!KNOWN_ADDRS[serial].find(k=>k.addr===addr)){
+          KNOWN_ADDRS[serial].push({
+            addr, id:'ra_'+addr.toString(16).toLowerCase(),
+            label:ach.Title, type:'u32',
+            hint:'RetroAchievements — '+esc(ach.Description||ach.Title)
+          });
+          added++;
+        }
+      });
+    });
+    msg.textContent=`✓ ${achCount} achievements → ${added} new addresses added.`;
+    msg.style.color='#4DFF91';
+    renderKnownAddrs(serial);
+    if(scConnected) setTimeout(kaReadAll,100);
+  }catch(e){
+    msg.textContent='✗ '+e.message;
+    msg.style.color='#ff6b6b';
+  }
+}
+
+function parseRAMemAddr(memAddr){
+  /* Extract EE-space addresses from RA condition strings.
+     Pattern matches: 0x[OptionalSizeFlag][HexAddress]
+     Filter to PS2 EE RAM range 0x00100000–0x01FFFFFF */
+  const re=/0x[A-Za-z]?([0-9A-Fa-f]{4,8})/g;
+  const addrs=[];
+  let m;
+  while((m=re.exec(memAddr))!==null){
+    const addr=parseInt(m[1],16);
+    if(addr>=0x00100000&&addr<=0x01FFFFFF) addrs.push(addr);
+  }
+  return [...new Set(addrs)];
+}
+
+/* ═══════════════════════════════════════════════════════
+   API KEY PERSISTENCE
+   Stash RA + SteamGridDB credentials in localStorage so the user
+   doesn't have to re-enter them every session.  No keys are sent
+   anywhere except the official APIs.
+═══════════════════════════════════════════════════════ */
+const _LS = { ra_uid:'tsv2_ra_uid', ra_key:'tsv2_ra_key', sg_key:'tsv2_sg_key' };
+function loadKeys(){
+  try{
+    const u=localStorage.getItem(_LS.ra_uid); if(u) document.getElementById('ra-uid').value=u;
+    const k=localStorage.getItem(_LS.ra_key); if(k) document.getElementById('ra-key').value=k;
+    const s=localStorage.getItem(_LS.sg_key); if(s) document.getElementById('sg-key').value=s;
+  }catch{}
+}
+function saveKeys(){
+  try{
+    localStorage.setItem(_LS.ra_uid, document.getElementById('ra-uid').value);
+    localStorage.setItem(_LS.ra_key, document.getElementById('ra-key').value);
+    localStorage.setItem(_LS.sg_key, document.getElementById('sg-key').value);
+  }catch{}
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUGGESTED FIELDS (genre-driven chips)
+   Surfaces likely scannable fields based on the game's genre tag in
+   GAME_DB.  Click → pre-fills scan type and focuses the value input.
+═══════════════════════════════════════════════════════ */
+function renderSuggestedFields(serial){
+  const sec  = document.getElementById('sf-sec');
+  const chips= document.getElementById('sf-chips');
+  const lbl  = document.getElementById('sf-genre');
+  const game = getGame(serial);
+  if (!game || !GENRE_FIELD_HINTS[game.genre]) { sec.style.display='none'; return; }
+  const fields = GENRE_FIELD_HINTS[game.genre];
+  lbl.textContent = '· ' + game.genre;
+  chips.innerHTML = fields.map((f,i) =>
+    `<button class="ka-btn" onclick="suggestField(${i},'${game.genre}')" title="${esc(f.hint||'')}" style="font-size:9px;padding:3px 7px">${esc(f.label)}</button>`
+  ).join('');
+  sec.style.display = 'block';
+}
+function suggestField(idx, genre){
+  const f = (GENRE_FIELD_HINTS[genre]||[])[idx]; if (!f) return;
+  /* type → scanner size dropdown */
+  const sizeMap = {u32:'4', u16:'2', u8:'1', float:'f', s32:'4'};
+  document.getElementById('sc-type').value = sizeMap[f.type] || '4';
+  /* helpful placeholder */
+  const inp = document.getElementById('sc-val');
+  inp.placeholder = f.hint || ('value for '+f.label);
+  inp.focus();
+  toast('Scan setup → ' + f.label);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ZERO-CONFIG GAME ART (libretro-thumbnails)
+   Pulls boxart / title screen / gameplay snap from the public
+   libretro-thumbnails GitHub repos.  No API key, no account, no
+   rate-limiting — just <img src=…> against raw.githubusercontent.com.
+   Each console has its own repo (see CONSOLE_MAP above).
+═══════════════════════════════════════════════════════ */
+/**
+ * Build a raw.githubusercontent.com URL for a libretro-thumbnails image.
+ *
+ * @param {string} gameId  Normalised game ID
+ * @param {string} kind    'Boxarts' | 'Titles' | 'Snaps'
+ * @returns {string|null}  Full URL or null if the game / console is unknown
+ */
+function libretroUrl(gameId, kind) {
+  const g    = getGame(gameId);
+  if (!g || !g.libretroName) return null;
+  const repo = CONSOLE_MAP[g.console]?.libretroRepo;
+  if (!repo) return null;
+  return 'https://raw.githubusercontent.com/libretro-thumbnails/' +
+         repo + '/master/Named_' + kind + '/' +
+         encodeURIComponent(g.libretroName) + '.png';
+}
+
+/* Render the three thumb kinds for the current game.
+ * We don't probe the URLs — we just inject <img> tags and let onerror
+ * hide the broken ones.  Zero requests until the browser fetches the image. */
+function renderLibretroArt(serial){
+  const sec = document.getElementById('art-sec');
+  const thumbs = document.getElementById('art-thumbs');
+  const msg = document.getElementById('art-msg');
+  const g = getGame(serial);
+  if (!g || !g.libretroName) { sec.style.display='none'; return; }
+  const kinds = [
+    {k:'Boxarts', label:'Box',    w:50,  h:70 },
+    {k:'Titles',  label:'Title',  w:90,  h:60 },
+    {k:'Snaps',   label:'Screen', w:90,  h:60 },
+  ];
+  thumbs.innerHTML = kinds.map(({k,label,w,h}) => {
+    const url = libretroUrl(serial, k);
+    return `<div style="position:relative;width:${w}px;height:${h}px;border:1px solid #333;border-radius:3px;overflow:hidden;cursor:pointer;background:#0a0a0a"
+                onclick="useLibretroArt('${esc(url)}','${label}')"
+                title="${label} — click to add as Image widget">
+      <img src="${esc(url)}" loading="lazy" onerror="this.parentElement.style.display='none';checkArtEmpty()" style="width:100%;height:100%;object-fit:cover;display:block">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);color:#4DFF91;font-size:7px;padding:1px 3px;text-align:center;letter-spacing:.5px">${label}</div>
+    </div>`;
+  }).join('');
+  msg.textContent = 'Click any thumb to add as an Image widget. Need more? See Advanced ↓';
+  msg.style.color = '#555';
+  sec.style.display = 'block';
+}
+
+/* If every thumb 404s, surface a soft hint that user can try SGDB. */
+function checkArtEmpty(){
+  const thumbs = document.getElementById('art-thumbs');
+  const visible = [...thumbs.children].filter(c => c.style.display !== 'none').length;
+  if (visible === 0) {
+    document.getElementById('art-msg').innerHTML =
+      'No libretro-thumbnails art found. Try ⚡SGDB in <b style="color:#FF8C00">Advanced</b> for hero/banner art.';
+  }
+}
+
+function useLibretroArt(url, kind){
+  /* Reuse the SGDB widget-spawn logic with kind→preset mapping. */
+  const presets = {
+    Box:    {w:140, h:210, x:20, y:40 },
+    Title:  {w:300, h:100, x:30, y:8  },
+    Screen: {w:300, h:170, x:30, y:30 },
+  };
+  const p = presets[kind] || {w:300, h:120, x:30, y:30};
+  const w = {
+    id:'w'+(state.nextId++), type:'image',
+    x:p.x, y:p.y, w:p.w, h:p.h,
+    cfg:{ src:url, fit:'cover', radius:6, opacity:1 },
+  };
+  state.widgets.push(w);
+  renderWidget(w); selectWidget(w.id); renderDpList();
+  toast(kind+' art added — drag to reposition');
+}
+
+/* Toggle the Advanced API panel (RA + SGDB) */
+function toggleAdv(){
+  const body = document.getElementById('adv-body');
+  const tog  = document.getElementById('adv-toggle');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  tog.textContent = (open ? '▼' : '▶') + ' ADVANCED · API integrations (optional)';
+}
+
+/* ═══════════════════════════════════════════════════════
+   STEAMGRIDDB INTEGRATION (optional power-user feature)
+   Free CORS-friendly API.  Get a key at steamgriddb.com → Profile → API.
+   Endpoints used:
+     /search/autocomplete/{name}        →  game.id
+     /heroes/game/{id}                  →  hero (banner) art
+     /grids/game/{id}?dimensions=600x900,460x215  → vertical/horizontal grid
+     /logos/game/{id}                   →  transparent logo
+═══════════════════════════════════════════════════════ */
+const SGDB_BASE = 'https://www.steamgriddb.com/api/v2';
+async function _sgdbFetch(path, key){
+  const r = await fetch(SGDB_BASE+path, {
+    headers: {'Authorization': 'Bearer '+key},
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!r.ok) throw new Error('SteamGridDB HTTP '+r.status);
+  return r.json();
+}
+
+async function fetchSGDB(){
+  saveKeys();
+  const key = document.getElementById('sg-key').value.trim();
+  const msg = document.getElementById('sg-msg');
+  const thumbs = document.getElementById('sg-thumbs');
+  if (!key) { msg.textContent='⚠ Enter a SteamGridDB API key (free at steamgriddb.com)'; msg.style.color='#FF8C00'; return; }
+  const serial = (state.meta.gameId||'').toUpperCase();
+  const game   = getGame(serial);
+  const queryName = game?.sgdbName || game?.name || state.meta.name || '';
+  if (!queryName) { msg.textContent='⚠ Set a Game ID or theme name first'; msg.style.color='#FF8C00'; return; }
+  msg.textContent = 'Searching SteamGridDB for "'+queryName+'"…'; msg.style.color='#555';
+  thumbs.innerHTML = '';
+
+  try {
+    /* 1. resolve to a SteamGridDB game ID */
+    const search = await _sgdbFetch('/search/autocomplete/'+encodeURIComponent(queryName), key);
+    if (!search.success || !search.data || !search.data.length) throw new Error('No games found for "'+queryName+'"');
+    const sgId = search.data[0].id;
+    const sgName= search.data[0].name;
+
+    /* 2. fetch hero, grid (both orientations), and logo in parallel */
+    const [heroes, vGrids, hGrids, logos] = await Promise.allSettled([
+      _sgdbFetch('/heroes/game/'+sgId,                              key),
+      _sgdbFetch('/grids/game/' +sgId+'?dimensions=600x900',        key),
+      _sgdbFetch('/grids/game/' +sgId+'?dimensions=460x215,920x430',key),
+      _sgdbFetch('/logos/game/' +sgId,                              key),
+    ]);
+
+    /* Collect all available URLs */
+    const collected = [];
+    const grab = (kind, res) => {
+      if (res.status==='fulfilled' && res.value.success && res.value.data?.length) {
+        res.value.data.slice(0,4).forEach(it => collected.push({kind, url:it.url, w:it.width, h:it.height}));
+      }
+    };
+    grab('Hero',  heroes);
+    grab('Vert',  vGrids);
+    grab('Horiz', hGrids);
+    grab('Logo',  logos);
+
+    if (!collected.length) throw new Error('Game found ("'+sgName+'") but no art assets');
+
+    /* Render thumbnail grid — click a thumb to use it as the source for the next image widget */
+    thumbs.innerHTML = collected.map((a,i) => `
+      <div onclick="useSGDBArt('${esc(a.url)}','${a.kind}')" title="${a.kind} ${a.w}×${a.h} — click to add as Image widget"
+           style="position:relative;width:64px;height:38px;border:1px solid #333;border-radius:3px;overflow:hidden;cursor:pointer;background:#0a0a0a">
+        <img src="${esc(a.url)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);color:#FFB347;font-size:7px;padding:1px 3px;text-align:center;letter-spacing:.5px">${a.kind}</div>
+      </div>
+    `).join('');
+    msg.textContent = '✓ "'+sgName+'" — '+collected.length+' assets. Click one to add as Image widget.';
+    msg.style.color = '#4DFF91';
+  } catch(e) {
+    msg.textContent = '✗ '+e.message;
+    msg.style.color = '#ff6b6b';
+  }
+}
+
+function useSGDBArt(url, kind){
+  /* Add a new Image widget pre-configured with this art URL.
+   * Sized appropriately for the asset kind:
+   *   Hero  → wide banner (300×100, top of canvas)
+   *   Logo  → wide title (260×80, top of canvas)
+   *   Vert  → boxart (140×210, left side)
+   *   Horiz → grid (280×130) */
+  const presets = {
+    Hero:  {w:300, h:100, x:30,  y:8  },
+    Logo:  {w:260, h:80,  x:50,  y:20 },
+    Vert:  {w:140, h:210, x:20,  y:40 },
+    Horiz: {w:280, h:130, x:40,  y:30 },
+  };
+  const p = presets[kind] || {w:300, h:120, x:30, y:30};
+  const w = {
+    id:'w'+(state.nextId++), type:'image',
+    x:p.x, y:p.y, w:p.w, h:p.h,
+    cfg:{ src:url, fit:'cover', radius:6, opacity:1 },
+  };
+  state.widgets.push(w);
+  renderWidget(w); selectWidget(w.id); renderDpList();
+  toast(kind+' art added — drag to reposition');
+}
+
+/* ── Toast ── */
+let _tt;
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800)}
+</script>
+</body>
+</html>
