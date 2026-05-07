@@ -1,7 +1,7 @@
 # Theem-r
 
 > **Visual theme builder for [EmuLnk](https://github.com/EmuLnk)-compatible emulators.**  
-> Design HUD overlays, wire up live memory data, and export ready-to-install theme packages — all from a single HTML file, no install required.
+> Design HUD overlays, find live memory addresses, and export ready-to-install theme packages — all from a single HTML file, no install required.
 
 <div align="center">
 
@@ -25,7 +25,65 @@ EmuLnk lets you run a second-screen HUD on your phone while gaming — showing l
 
 **Theem-r is the tool you use to build those HUDs.**
 
-You drag widgets onto a phone-shaped canvas, connect them to game data, and export a ZIP that drops straight into EmuLnk. No coding required for the basics. If you want to get into the weeds, everything is open and hackable.
+You drag widgets onto a phone-shaped canvas, wire them to live memory values discovered with the built-in scanner, and export a ZIP that drops straight into EmuLnk. No coding required for the basics. If you want to get into the weeds, everything is open and hackable.
+
+---
+
+## 🔍 Memory Scanner
+
+The Memory Scanner is the core tool for finding the memory addresses that power your HUD. It connects directly to your running emulator and lets you search live RAM — the same technique cheat engines use.
+
+**You don't need to know any addresses in advance.** Theem-r ships with a pre-loaded database of verified addresses for popular games. If your game is in the list, just click a row and the address is ready to pin.
+
+For everything else, the interactive scan narrows down thousands of candidates to a single confirmed address in a few rounds.
+
+### Setting up ADB (desktop connection)
+
+ADB (Android Debug Bridge) is a free tool from Google that lets Theem-r talk to your emulator device over USB.
+
+**Install ADB:**
+- [Download Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) (Windows / Mac / Linux — pick your platform)
+- Extract the ZIP anywhere — no installer needed
+
+**Connect your device:**
+1. Enable **Developer Options** on your Android device (tap Build Number 7 times in Settings → About)
+2. Enable **USB Debugging** inside Developer Options
+3. Plug in via USB and run:
+   ```bash
+   adb devices
+   ```
+   Your device should appear in the list.
+
+**Forward the scanner port:**
+```bash
+adb forward tcp:55356 tcp:55356
+```
+
+Then in Theem-r's Scanner tab, set IP to `127.0.0.1`, port `55356`, and hit **Test**. The green dot means you're live.
+
+> **On-device shortcut:** If you open Theem-r directly in the browser on your Android device (not on a desktop), it auto-connects to `127.0.0.1:55356` on load — no ADB forwarding needed.
+
+### Scanning workflow
+
+1. Launch your game and get to a point where you know a specific value (e.g. you have exactly **85 HP**)
+2. In the **Scanner tab**, enter `85` and hit **Scan** — Theem-r finds every RAM address currently holding that value
+3. Take a hit in-game to change your HP, then enter the new value and **Re-scan** — this filters down the candidates
+4. Repeat until you're down to one address (usually takes 2–4 rounds)
+5. Hit **Pin** on the address — give it an ID (`health`) and a type (`u8`, `float`, etc.)
+6. The pinned address is now a named **data point** that any widget on your canvas can bind to
+
+### Known addresses
+
+Popular games already have verified addresses in the built-in database. When your game ID resolves, a list of known addresses appears as one-click rows — click any row to read the live value immediately, no scanning needed. These cover things like health, money, position, wanted level, and more.
+
+### Useful references for finding addresses
+
+| Resource | What it's for |
+|---|---|
+| [RetroAchievements](https://retroachievements.org) | Community-sourced memory notes for thousands of games — enable in Advanced panel with a free API key |
+| [GameTDB](https://www.gametdb.com/) | Game ID lookup for Wii, GameCube, DS, 3DS, Switch — Theem-r uses this automatically for Wii/GCN IDs |
+| [PCSX2 GameIndex](https://github.com/PCSX2/pcsx2) | Verified PS1/PS2/PSP disc serials — used automatically, no setup |
+| [GB Hardware DB (gekkio)](https://gbhwdb.gekkio.fi/cartridges/gb.html) | Physical ROM IDs for Game Boy / GBC cartridges (helpful when your ROM file name doesn't match expectations) |
 
 ---
 
@@ -41,10 +99,9 @@ You drag widgets onto a phone-shaped canvas, connect them to game data, and expo
 ### Then
 3. Pick a console and type a Game ID in the right-side panel
 4. Add widgets from the **Design** tab on the left
-5. Click **Export ZIP** in the header when you're happy with the layout
-6. Extract the ZIP into your EmuLnk themes folder on your Android device
-
-That's it.
+5. Use the **Scanner** tab to find and pin memory addresses
+6. Click **Export ZIP** in the header when you're happy with the layout
+7. Extract the ZIP into your EmuLnk themes folder on your Android device
 
 ---
 
@@ -52,7 +109,7 @@ That's it.
 
 ### 🎨 Visual canvas editor
 - 360 × 640 canvas matches EmuLnk's phone viewport exactly
-- Drag, resize, and nudge widgets with your mouse or the arrow key inputs
+- Drag, resize, and nudge widgets with your mouse or arrow key inputs
 - Live preview updates as you edit properties
 
 ### 📦 Widget types
@@ -64,16 +121,20 @@ That's it.
 | **Text** | Static label or flavour text |
 | **Minimap** | 2D position dot on a world-space grid |
 | **Image** | Boxart, banner, or any image URL |
-| **Scanner** | Inline memory scanner (advanced) |
-| **Editor** | In-HUD value editor (advanced) |
+| **Scanner** | Inline memory scanner widget inside the HUD |
+| **Editor** | In-HUD value editor |
 
 ### 🕹️ Supported consoles
 NES · SNES · N64 · Game Boy · Game Boy Color · Game Boy Advance · Nintendo DS · Nintendo 3DS · GameCube · Wii · PlayStation 1 · PlayStation 2 · PlayStation Portable · Sega Genesis / Mega Drive
 
-### 🔍 Automatic game lookup
-Type a Game ID and Theem-r tries to resolve it automatically:
-- **Disc serials** (PS1 / PS2 / PSP, e.g. `SLUS-20946`) → looked up against the [PCSX2 GameIndex](https://github.com/PCSX2/pcsx2) with zero setup
-- **Any console** → searched via [RetroAchievements](https://retroachievements.org) when you have an RA API key saved
+### 🔎 Automatic game lookup
+Type a Game ID and Theem-r tries to resolve it automatically across multiple databases — no setup required for most:
+
+| ID format | Source | Requires |
+|---|---|---|
+| `SLUS-20946` (PS1/PS2/PSP disc serial) | [PCSX2 GameIndex](https://github.com/PCSX2/pcsx2) | Nothing |
+| `RMCE01` / `GMSE01` (Wii / GameCube) | [GameTDB](https://www.gametdb.com/) | Nothing |
+| Any title string | [RetroAchievements](https://retroachievements.org) | Free RA API key |
 
 Once a game resolves you get its title, genre, and suggested scan fields filled in automatically.
 
@@ -123,21 +184,6 @@ Copy the extracted folders to your device manually via USB or a file manager app
 
 ---
 
-## Memory Scanner (advanced)
-
-The **Scanner tab** connects to a running emulator via EmuLnk's ADB bridge and lets you search live memory in real time — the same technique cheat engines use.
-
-**Basic workflow:**
-1. Connect (`IP:port` or `localhost:port` on the same device)
-2. Enter a known value (e.g. your current HP) and hit **Scan**
-3. Do something in-game to change the value
-4. Re-scan with the new value — repeat until one address remains
-5. **Pin** the address to your profile and it becomes a named data point widgets can bind to
-
-Known addresses for popular games are pre-loaded and appear as one-click rows so you can skip the scan entirely.
-
----
-
 ## Contributing
 
 Theem-r is open source and forks / PRs are welcome.
@@ -163,7 +209,7 @@ Theem-r is intentionally a **single self-contained HTML file** — no build step
 
 | Name | Purpose |
 |---|---|
-| `CONSOLE_MAP` | All supported consoles — RA system ID, libretro repo name, game ID format hint, serial regex |
+| `CONSOLE_MAP` | All supported consoles — RA system ID, libretro repo name, game ID format hint, serial regex, GameTDB flag |
 | `GAME_DB` | Seed game library with verified serials / ROM IDs, genre, RA ID, libretro filename |
 | `GAME_CACHE` | Runtime store for games resolved via online lookup (cleared on page reload) |
 | `KNOWN_ADDRS` | Pre-confirmed memory addresses keyed by game ID |
@@ -177,12 +223,14 @@ Theem-r is intentionally a **single self-contained HTML file** — no build step
 <details>
 <summary>Game lookup flow</summary>
 
-When a Game ID is typed, `onGameId()` resolves it in three tiers:
+When a Game ID is typed, `onGameId()` resolves it in four tiers:
 
 1. **Local (`GAME_DB` / `GAME_CACHE`)** — instant, no network
-2. **PCSX2 GameIndex** (`lookupDiscSerial`) — for `XXXX-NNNNN` disc serials only.  
-   Fetches `raw.githubusercontent.com/PCSX2/pcsx2/master/bin/resources/GameIndex.yaml` once per session, caches in `sessionStorage`, then searches with `String.indexOf` + regex.  Zero-config, no API key.
-3. **RetroAchievements** (`lookupViaRA`) — for any console when an RA key is saved.  
+2. **PCSX2 GameIndex** (`lookupDiscSerial`) — for `XXXX-NNNNN` disc serials (PS1/PS2/PSP).  
+   Fetches `raw.githubusercontent.com/PCSX2/pcsx2/master/bin/resources/GameIndex.yaml` once per session, caches in `sessionStorage`, searches with `String.indexOf` + regex. Zero-config, no API key.
+3. **GameTDB** (`lookupViaGameTDB`) — for 6-char Wii / GameCube IDs (e.g. `RMCE01`).  
+   Fetches `gametdb.com/wiitdb.txt?GAMECUBE=1` once per session (~330 KB plain text), caches in `sessionStorage`, searches with `indexOf`. Zero-config, no API key.
+4. **RetroAchievements** (`lookupViaRA`) — for any console when an RA key is saved.  
    Calls `API_SearchGamesList.php?search=QUERY&c=RA_SYSTEM_ID`, picks the result with the most achievements as the canonical match.
 
 Results land in `GAME_CACHE` and trigger art fetch + genre hints + known address display.

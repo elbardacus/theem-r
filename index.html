@@ -270,7 +270,14 @@ button{cursor:pointer}
             <button class="conn-btn" onclick="scConnect()">Test</button>
           </div>
           <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
-          <div class="adb-hint">On-device: opens at <code>127.0.0.1</code> automatically. Desktop: <code>adb forward tcp:55356 tcp:55356</code> then use <code>127.0.0.1</code>.</div>
+          <div class="adb-hint">
+            <b style="color:#666">On device:</b> opens <code>127.0.0.1:55356</code> automatically.<br>
+            <b style="color:#666">From desktop via USB:</b><br>
+            &nbsp;1. Install <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" style="color:#FF8C00">Android Platform Tools</a> (ADB)<br>
+            &nbsp;2. Enable USB Debugging on device<br>
+            &nbsp;3. Run: <code>adb forward tcp:55356 tcp:55356</code><br>
+            &nbsp;4. Set IP to <code>127.0.0.1</code> and hit Test
+          </div>
         </div>
 
         <!-- Scan controls -->
@@ -705,8 +712,8 @@ const CONSOLE_MAP = {
   'GBA':     { label:'Game Boy Advance',           raSystemId:  5, libretroRepo:'Nintendo_-_Game_Boy_Advance',                    idFormat:'4-char game code  (e.g. BPRE)',         serialPfx:null },
   'NDS':     { label:'Nintendo DS',                raSystemId: 18, libretroRepo:'Nintendo_-_Nintendo_DS',                         idFormat:'ROM title  (e.g. MARIO KART DS)',      serialPfx:null },
   '3DS':     { label:'Nintendo 3DS',               raSystemId: 43, libretroRepo:'Nintendo_-_Nintendo_3DS',                        idFormat:'ROM title',                            serialPfx:null },
-  'GCN':     { label:'GameCube',                   raSystemId: 16, libretroRepo:'Nintendo_-_GameCube',                            idFormat:'Game ID  (e.g. GMSE01)',               serialPfx:/^[A-Z]{4}[0-9]{2}$/ },
-  'Wii':     { label:'Wii',                        raSystemId: 45, libretroRepo:'Nintendo_-_Wii',                                 idFormat:'Game ID  (e.g. RMCE01)',               serialPfx:/^[A-Z]{4}[0-9]{2}$/ },
+  'GCN':     { label:'GameCube',                   raSystemId: 16, libretroRepo:'Nintendo_-_GameCube',                            idFormat:'Game ID  (e.g. GMSE01)',               serialPfx:/^[A-Z0-9]{6}$/, gameTDB:'wii' },
+  'Wii':     { label:'Wii',                        raSystemId: 45, libretroRepo:'Nintendo_-_Wii',                                 idFormat:'Game ID  (e.g. RMCE01)',               serialPfx:/^[A-Z0-9]{6}$/, gameTDB:'wii' },
 
   /* Sony ───────────────────────────────────────────── */
   'PS1':     { label:'PlayStation (PS1)',           raSystemId: 12, libretroRepo:'Sony_-_PlayStation',                             idFormat:'Disc serial  (e.g. SLUS-00067)',       serialPfx:/^[A-Z]{4}-[0-9]{5}$/ },
@@ -1007,24 +1014,31 @@ function switchTab(t) {
 
 /* ═══════════════════════════════════════════════════════
    ONLINE GAME LOOKUP
-   Two complementary strategies depending on the game ID format:
+   Three complementary strategies tried in order:
 
-   lookupDiscSerial(serial)
-     — For PS1 / PS2 / PSP disc serials (format: XXXX-NNNNN).
-     — Fetches the PCSX2 GameIndex.yaml from raw.githubusercontent.com
-       (always CORS-open, no auth required).  The ~2.3 MB YAML is
-       downloaded once per session and cached in sessionStorage;
-       subsequent lookups are instant in-memory regex searches.
+   Tier 2 — lookupDiscSerial(serial, con)
+     — PS1 / PS2 / PSP disc serials (format: XXXX-NNNNN).
+     — Fetches PCSX2 GameIndex.yaml from raw.githubusercontent.com
+       (~2.3 MB, CORS-open, no auth required).  Cached in sessionStorage.
 
-   lookupViaRA(query, raSystemId)
+   Tier 3 — lookupViaGameTDB(gameId, con)
+     — Wii / GameCube 6-char IDs (e.g. RMCE01, GMSE01).
+     — Fetches gametdb.com/wiitdb.txt (~330 KB, GAMECUBE=1 for GCN).
+       Plain-text "GAME_ID = Title" format; cached in sessionStorage.
+     — Zero-config, no API key required.
+
+   Tier 4 — lookupViaRA(query, raSystemId, raKey)
      — Universal fallback for any console when an RA API key is saved.
      — Sends the game ID / title to RetroAchievements SearchGamesList,
        filtered by console when a system ID is known.
      — Returns raId + title which enables the RA achievements panel.
 ═══════════════════════════════════════════════════════ */
 
-const _PCSX2_IDX_URL = 'https://raw.githubusercontent.com/PCSX2/pcsx2/master/bin/resources/GameIndex.yaml';
-const _RA_API_BASE   = 'https://retroachievements.org/API';
+const _PCSX2_IDX_URL  = 'https://raw.githubusercontent.com/PCSX2/pcsx2/master/bin/resources/GameIndex.yaml';
+const _RA_API_BASE    = 'https://retroachievements.org/API';
+/* GameTDB covers Wii + GameCube; ?GAMECUBE=1 adds GCN entries to the same file.
+   Plain text format: "GAME_ID = Title"  ~330 KB, fetched once per session. */
+const _GAMETDB_WII_URL = 'https://www.gametdb.com/wiitdb.txt?GAMECUBE=1&LANG=EN';
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
@@ -1180,6 +1194,56 @@ async function lookupViaRA(query, raSysId, raKey) {
   }
 }
 
+/* ── GameTDB lookup (Wii / GameCube) ─────────────────────────────────── */
+
+/**
+ * Resolve a 6-char Wii or GameCube game ID against the GameTDB title list.
+ * The file (~330 KB) is fetched once per session and cached in sessionStorage.
+ *
+ * Format (one entry per line): "RMCE01 = Super Mario Galaxy"
+ *
+ * @param  {string} gameId  6-char ID, e.g. "RMCE01" or "GMSE01"
+ * @param  {string} con     Console key ('Wii' | 'GCN')
+ * @returns {Promise<object|null>}
+ */
+async function lookupViaGameTDB(gameId, con) {
+  try {
+    /* Retrieve or download the Wii + GCN title list */
+    let db = null;
+    try { db = sessionStorage.getItem('_gametdbwii'); } catch(e) {}
+    if (!db) {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 12000);
+      const r    = await fetch(_GAMETDB_WII_URL, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) return null;
+      db = await r.text();
+      try { sessionStorage.setItem('_gametdbwii', db); } catch(e) {}
+    }
+
+    /* Each line: "GAME_ID = Title" — fast indexOf, then slice to end of line */
+    const needle  = '\n' + gameId.toUpperCase() + ' = ';
+    const pos     = db.indexOf(needle);
+    if (pos === -1) return null;
+
+    const lineEnd = db.indexOf('\n', pos + needle.length);
+    const name    = db.slice(pos + needle.length, lineEnd > -1 ? lineEnd : undefined).trim();
+    if (!name) return null;
+
+    const genre = inferGenreFromTitle(name);
+    return {
+      name,
+      genre,
+      console:      con,
+      libretroName: inferLibretroName(name, gameId, con),
+      _src:         'GameTDB',
+    };
+  } catch(e) {
+    console.warn('[theme-builder] GameTDB lookup failed:', e.message);
+    return null;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════
    CONSOLE SELECTOR
 ═══════════════════════════════════════════════════════ */
@@ -1284,14 +1348,15 @@ function onGameId(v) {
     return;
   }
 
-  /* ── Tier 2 + 3: online lookup (debounced 600 ms) ─── */
+  /* ── Tier 2 + 3 + 4: online lookup (debounced 600 ms) ─── */
   const isDiscSerial = /^[A-Z]{4}-[0-9]{5}$/.test(gameId);  /* PS1/PS2/PSP format */
   const con          = state.meta.console;
+  const isWiiGcnId   = /^[A-Z0-9]{6}$/.test(gameId) && (con === 'GCN' || con === 'Wii');
   const conInfo      = CONSOLE_MAP[con] || null;
   const raKey        = document.getElementById('ra-key')?.value || '';
 
   /* Only attempt lookup once the ID looks complete */
-  const readyToLook  = isDiscSerial || (gameId.length >= 3 && raKey);
+  const readyToLook  = isDiscSerial || isWiiGcnId || (gameId.length >= 3 && raKey);
   if (!readyToLook) {
     lbl.textContent = gameId.length > 2 ? 'Enter a full game ID — or save an RA key to search by title' : '';
     lbl.style.color = '#555';
@@ -1313,11 +1378,17 @@ function onGameId(v) {
       found = await lookupDiscSerial(gameId, con || 'PS2');
     }
 
-    /* Tier 3 — RetroAchievements (any console, requires RA key) */
+    /* Tier 3 — GameTDB (Wii / GameCube 6-char IDs, zero-config) */
+    if (!found && isWiiGcnId) {
+      found = await lookupViaGameTDB(gameId, con);
+    }
+
+    /* Tier 4 — RetroAchievements (any console, requires RA key) */
     if (!found && raKey) {
       const raSysId = conInfo?.raSystemId ?? null;
       found = await lookupViaRA(gameId, raSysId, raKey);
     }
+
 
     if (found) {
       GAME_CACHE[gameId] = found;
