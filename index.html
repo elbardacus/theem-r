@@ -1351,7 +1351,10 @@ function onGameId(v) {
   /* ── Tier 2 + 3 + 4: online lookup (debounced 600 ms) ─── */
   const isDiscSerial = /^[A-Z]{4}-[0-9]{5}$/.test(gameId);  /* PS1/PS2/PSP format */
   const con          = state.meta.console;
-  const isWiiGcnId   = /^[A-Z0-9]{6}$/.test(gameId) && (con === 'GCN' || con === 'Wii');
+  /* Wii IDs start with R, GameCube with G — 6 alphanumeric chars.
+   * Accept by format alone so auto-populate from emulator works even
+   * if the console dropdown hasn't been set yet. */
+  const isWiiGcnId   = /^[RG][A-Z0-9]{5}$/.test(gameId) || (/^[A-Z0-9]{6}$/.test(gameId) && (con === 'GCN' || con === 'Wii'));
   const conInfo      = CONSOLE_MAP[con] || null;
   const raKey        = document.getElementById('ra-key')?.value || '';
 
@@ -1378,9 +1381,11 @@ function onGameId(v) {
       found = await lookupDiscSerial(gameId, con || 'PS2');
     }
 
-    /* Tier 3 — GameTDB (Wii / GameCube 6-char IDs, zero-config) */
+    /* Tier 3 — GameTDB (Wii / GameCube 6-char IDs, zero-config)
+     * Infer console from ID prefix if not selected: R=Wii, G=GameCube */
     if (!found && isWiiGcnId) {
-      found = await lookupViaGameTDB(gameId, con);
+      const gcnCon = con || (gameId.startsWith('G') ? 'GCN' : 'Wii');
+      found = await lookupViaGameTDB(gameId, gcnCon);
     }
 
     /* Tier 4 — RetroAchievements (any console, requires RA key) */
