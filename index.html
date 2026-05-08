@@ -199,6 +199,25 @@ button{cursor:pointer}
 .no-sel{color:#444;font-size:11px;text-align:center;margin-top:20px;line-height:1.7}
 .game-lookup{margin-top:3px;font-size:10px;color:#4DFF91;min-height:14px}
 
+/* ── Bridge FAQ modal ── */
+#bridge-modal{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:300;padding:16px}
+#bridge-modal.show{display:flex}
+.bridge-box{background:#1a1a1a;border:1px solid #444;border-radius:10px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.bridge-title{font-size:15px;font-weight:900;color:#FF8C00;letter-spacing:1px}
+.bridge-sub{font-size:11px;color:#888;line-height:1.6}
+.bridge-h{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-top:4px}
+.bridge-step{display:flex;gap:10px;align-items:flex-start;font-size:11px;color:#aaa;line-height:1.6}
+.bridge-num{background:#FF8C00;color:#000;font-weight:900;font-size:10px;border-radius:3px;padding:1px 6px;flex-shrink:0;margin-top:2px}
+.bridge-code{background:#111;border:1px solid #2a2a2a;border-radius:4px;padding:6px 10px;font-family:monospace;font-size:11px;color:#4DFF91;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bridge-copy{font-size:9px;background:#222;border:1px solid #333;border-radius:3px;padding:2px 7px;color:#888;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.bridge-copy:hover{border-color:#FF8C00;color:#FF8C00}
+.bridge-note{background:#0a1a0a;border:1px solid #1a3a1a;border-radius:4px;padding:8px 12px;font-size:10px;color:#4DFF91;line-height:1.6}
+.bridge-warn{background:#1a1000;border:1px solid #3a2800;border-radius:4px;padding:8px 12px;font-size:10px;color:#FF8C00;line-height:1.6}
+.bridge-link{color:#FF8C00;text-decoration:none}
+.bridge-link:hover{text-decoration:underline}
+.bridge-close{align-self:flex-end;padding:6px 18px;background:#222;border:1px solid #444;border-radius:4px;font-size:12px;color:#aaa;cursor:pointer}
+.bridge-close:hover{border-color:#FF8C00;color:#fff}
+
 /* ── Pin modal ── */
 #pin-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200}
 #pin-modal.show{display:flex}
@@ -272,11 +291,8 @@ button{cursor:pointer}
           <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
           <div class="adb-hint">
             <b style="color:#666">On device:</b> opens <code>127.0.0.1:55356</code> automatically.<br>
-            <b style="color:#666">From desktop via USB:</b><br>
-            &nbsp;1. Install <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" style="color:#FF8C00">Android Platform Tools</a> (ADB)<br>
-            &nbsp;2. Enable USB Debugging on device<br>
-            &nbsp;3. Run: <code>adb forward tcp:55356 tcp:55356</code><br>
-            &nbsp;4. Set IP to <code>127.0.0.1</code> and hit Test
+            <b style="color:#666">From desktop:</b> requires the scanner bridge —
+            <span onclick="openBridgeModal()" style="color:#FF8C00;cursor:pointer;text-decoration:underline">what's that?</span>
           </div>
         </div>
 
@@ -421,6 +437,74 @@ button{cursor:pointer}
       <div id="widget-props"><p class="no-sel">← Add a widget from the Design tab, then click it to edit its properties.</p></div>
     </div>
 
+  </div>
+</div>
+
+<!-- Bridge FAQ modal -->
+<div id="bridge-modal">
+  <div class="bridge-box">
+    <div class="bridge-title">🔌 Scanner Bridge — FAQ</div>
+
+    <div class="bridge-sub">
+      The memory scanner talks to your emulator over HTTP, but EmuLnk emulators
+      communicate over UDP — a protocol browsers can't speak directly.
+      The <b style="color:#eee">bridge script</b> sits in the middle: it accepts HTTP from
+      Theem-r and translates it to UDP for the emulator.
+    </div>
+
+    <div class="bridge-note">
+      ✅ &nbsp;<b>Not needed on-device</b> — if you open Theem-r in a browser
+      directly on your Android device, it connects automatically. The bridge is
+      only needed when Theem-r is running on a desktop/laptop.
+    </div>
+
+    <div class="bridge-h">Requirements</div>
+    <div class="bridge-sub">
+      Python 3.6+ — free, no extra packages needed.<br>
+      <a class="bridge-link" href="https://www.python.org/downloads/" target="_blank">↗ Download Python</a>
+      &nbsp;·&nbsp;
+      <a class="bridge-link" href="https://developer.android.com/tools/releases/platform-tools" target="_blank">↗ Download ADB (Platform Tools)</a>
+    </div>
+
+    <div class="bridge-h">Setup (one-time)</div>
+    <div class="bridge-step">
+      <span class="bridge-num">1</span>
+      <span>Enable <b style="color:#eee">USB Debugging</b> on your Android device
+      (Settings → About → tap Build Number 7× → Developer Options → USB Debugging)</span>
+    </div>
+    <div class="bridge-step">
+      <span class="bridge-num">2</span>
+      <span>Plug device in via USB, then run this command on your desktop:</span>
+    </div>
+    <div class="bridge-code">
+      adb forward tcp:55356 tcp:55356
+      <span class="bridge-copy" onclick="copyCmd('adb forward tcp:55356 tcp:55356',this)">Copy</span>
+    </div>
+    <div class="bridge-step">
+      <span class="bridge-num">3</span>
+      <span>Download <b style="color:#eee">bridge.py</b> from the Theem-r repo and run it:</span>
+    </div>
+    <div class="bridge-code">
+      python bridge.py
+      <span class="bridge-copy" onclick="copyCmd('python bridge.py',this)">Copy</span>
+    </div>
+    <div style="font-size:10px;color:#555;margin-top:-6px">
+      <a class="bridge-link" href="https://raw.githubusercontent.com/elbardacus/theem-r/main/bridge.py" target="_blank">↗ Download bridge.py</a>
+    </div>
+
+    <div class="bridge-h">Connect in Theem-r</div>
+    <div class="bridge-step">
+      <span class="bridge-num">4</span>
+      <span>Set IP to <code style="color:#4DFF91">127.0.0.1</code>, port <code style="color:#4DFF91">55356</code>, then click <b style="color:#eee">Test</b> — green dot means live.</span>
+    </div>
+
+    <div class="bridge-warn">
+      ⚠️ &nbsp;<b>Work in progress</b> — the bridge script's UDP layer is stubbed pending
+      confirmation of the full EMLKV2 packet format from the EmuLnk developer.
+      Game ID auto-detection and live scanning will complete once the spec is confirmed.
+    </div>
+
+    <button class="bridge-close" onclick="closeBridgeModal()">Close</button>
   </div>
 </div>
 
@@ -1868,6 +1952,32 @@ function openPinModal(addr,val){
   document.getElementById('pin-id').focus();
 }
 function closePinModal(){document.getElementById('pin-modal').classList.remove('show');pinTarget=null}
+
+/* ── Bridge FAQ modal ──────────────────────────────────────────────────────── */
+
+function openBridgeModal(){
+  document.getElementById('bridge-modal').classList.add('show');
+}
+function closeBridgeModal(){
+  document.getElementById('bridge-modal').classList.remove('show');
+}
+/* Close modal when clicking the dark backdrop (outside the box) */
+document.getElementById('bridge-modal').addEventListener('click', function(e){
+  if(e.target === this) closeBridgeModal();
+});
+/**
+ * Copy a command string to the clipboard and briefly flash the button label.
+ * @param {string} text   The command to copy
+ * @param {HTMLElement} btn  The Copy button element (for visual feedback)
+ */
+function copyCmd(text, btn){
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.color = '#4DFF91';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  });
+}
 function confirmPin(){
   if(!pinTarget)return;
   const id=document.getElementById('pin-id').value.trim();
