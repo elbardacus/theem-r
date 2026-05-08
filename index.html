@@ -1736,7 +1736,7 @@ function drawMM(cv,x,y,h,c){
 /* ═══════════════════════════════════════════════════════
    SCANNER (calls port 55356 on the device)
 ═══════════════════════════════════════════════════════ */
-let scBase='', scPage_=0, scConnected=false, scHasResults=false;
+let scBase='', scPage_=0, scConnected=false, scHasResults=false, scResults_=[];
 let pinTarget=null; // { addr, val }
 
 function scUrl(path){ return `http://${document.getElementById('sc-ip').value.trim()}:${document.getElementById('sc-port').value.trim()}${path}`; }
@@ -1812,50 +1812,109 @@ async function scScan(){
     const floatVal = sz==='f' ? parseFloat(v) : parseInt(v);
     const apiSz = sz==='f' ? 4 : parseInt(sz);
     const d=await scFetch(`/scan?value=${floatVal}&size=${apiSz}&type=${sz==='f'?'float':'int'}`);
+    // Bridgr returns results inline; normalise field names (addr hex string→int, value→val)
+    scResults_=(d.results||[]).map(r=>({
+      addr: typeof r.addr==='string' ? parseInt(r.addr,16) : r.addr,
+      val:  r.value??r.val
+    }));
     scHasResults=true; scPage_=0;
-    document.getElementById('sc-count').textContent=`${d.count.toLocaleString()} results${d.capped?' (capped)':''}`;
+    document.getElementById('sc-count').textContent=`${scResults_.length.toLocaleString()} results${d.capped?' (capped)':''}`;
     ['f-val','f-chg','f-unch'].forEach(id=>document.getElementById(id).disabled=false);
-    await scLoadResults();
+    scLoadResults();
   }catch(e){toast('Scan error: '+e.message)}
   btn.disabled=false; btn.textContent='Scan';
 }
 
-async function scFilter(){const v=document.getElementById('sc-val').value.trim();await scFetch(`/filter?value=${v}`);await scLoadResults();}
-async function scChanged(){await scFetch('/filter_changed');await scLoadResults();}
-async function scUnchanged(){await scFetch('/filter_unchanged');await scLoadResults();}
-function scReset(){scHasResults=false;scPage_=0;document.getElementById('sc-results').innerHTML='<span style="color:#333;font-size:10px;padding:8px;display:block;text-align:center">Scan reset.</span>';document.getElementById('sc-count').textContent='—';document.getElementById('sc-pager').style.display='none';['f-val','f-chg','f-unch'].forEach(id=>document.getElementById(id).disabled=true)}
+async function scFilter(){
+  // Re-scan with the current value; Bridgr filters from existing candidates server-side
+  const v=document.getElementById('sc-val').value.trim(); if(!v) return;
+  const sz=document.getElementById('sc-type').value;
+  const floatVal=sz==='f'?parseFloat(v):parseInt(v);
+  const apiSz=sz==='f'?4:parseInt(sz);
+  try{
+    const d=await scFetch(`/scan?value=${floatVal}&size=${apiSz}&type=${sz==='f'?'float':'int'}`);
+    scResults_=(d.results||[]).map(r=>({
+      addr:typeof r.addr==='string'?parseInt(r.addr,16):r.addr,
+      val:r.value??r.val
+    }));
+    scPage_=0;
+    document.getElementById('sc-count').textContent=`${scResults_.length.toLocaleString()} results`;
+    scLoadResults();
+  }catch(e){toast('Filter error: '+e.message)}
+}
+async function scChanged(){
+  // Re-read every candidate and keep those whose value has changed from the stored val
+  if(!scResults_.length){toast('No scan results to filter');return}
+  const sz=document.getElementById('sc-type').value;
+  const apiSz=sz==='f'?4:parseInt(sz);
+  const kept=[];
+  for(const r of scResults_){
+    try{
+      const cur=await scFetch(`/read?addr=0x${r.addr.toString(16)}&size=${apiSz}&type=${sz==='f'?'float':'int'}`);
+      const curVal=cur.value??cur.val;
+      if(curVal!==r.val) kept.push({addr:r.addr,val:curVal});
+    }catch{/* skip unreadable addresses */}
+  }
+  scResults_=kept; scPage_=0;
+  document.getElementById('sc-count').textContent=`${scResults_.length.toLocaleString()} results`;
+  scLoadResults();
+}
+async function scUnchanged(){
+  // Re-read every candidate and keep those whose value matches the stored val
+  if(!scResults_.length){toast('No scan results to filter');return}
+  const sz=document.getElementById('sc-type').value;
+  const apiSz=sz==='f'?4:parseInt(sz);
+  const kept=[];
+  for(const r of scResults_){
+    try{
+      const cur=await scFetch(`/read?addr=0x${r.addr.toString(16)}&size=${apiSz}&type=${sz==='f'?'float':'int'}`);
+      const curVal=cur.value??cur.val;
+      if(curVal===r.val) kept.push({addr:r.addr,val:curVal});
+    }catch{/* skip unreadable addresses */}
+  }
+  scResults_=kept; scPage_=0;
+  document.getElementById('sc-count').textContent=`${scResults_.length.toLocaleString()} results`;
+  scLoadResults();
+}
+function scReset(){
+  scHasResults=false; scPage_=0; scResults_=[];
+  document.getElementById('sc-results').innerHTML='<span style="color:#333;font-size:10px;padding:8px;display:block;text-align:center">Scan reset.</span>';
+  document.getElementById('sc-count').textContent='—';
+  document.getElementById('sc-pager').style.display='none';
+  ['f-val','f-chg','f-unch'].forEach(id=>document.getElementById(id).disabled=true);
+  scFetch('/reset').catch(()=>{});  // clear server-side candidates too
+}
 function scPage(d){scPage_=Math.max(0,scPage_+d);scLoadResults()}
 
-async function scLoadResults(){
-  try{
-    const d=await scFetch(`/results?page=${scPage_}`);
-    const el=document.getElementById('sc-results');
-    document.getElementById('sc-count').textContent=`${d.count.toLocaleString()} results`;
-    document.getElementById('sc-pager').style.display=d.count>100?'flex':'none';
-    const pages=Math.ceil(d.count/100)||1;
-    document.getElementById('sc-page-lbl').textContent=`${scPage_+1} / ${pages}`;
-    if(!d.results.length){el.innerHTML='<span style="color:#555;font-size:10px;padding:8px;display:block;text-align:center">No results.</span>';return}
-    const serial=state.meta.gameId.toUpperCase();
-    const knownDB=KNOWN_ADDRS[serial]||[];
-    el.innerHTML=d.results.map(r=>{
-      const ka=knownDB.find(k=>k.addr===r.addr);
-      const valMatch=ka&&ka.min!=null&&r.val>=ka.min&&r.val<=ka.max;
-      const knownBadge=ka?`<span class="res-known" title="${esc(ka.hint||ka.label)}">${esc(ka.label)}</span>`:'';
-      const typeArg=ka?ka.type:'u32';
-      const safeLabel=ka?ka.label.replace(/['"\\]/g,''):'';
-      const checkBtn=valMatch
-        ?`<button class="res-chk" title="✓ Matches expected range for ${safeLabel} — click to confirm &amp; pin!" onclick="kaConfirmResult(${r.addr},${r.val},'${ka.id}','${safeLabel}','${typeArg}')">✓</button>`
-        :'';
-      return `<div class="res-item">
-        <span class="res-addr">0x${r.addr.toString(16).padStart(8,'0').toUpperCase()}</span>
-        ${knownBadge}
-        <span class="res-val">${r.val}</span>
-        ${checkBtn}
-        <button class="res-pin" onclick="openPinModal(${r.addr},${r.val})">Pin</button>
-        <button class="res-write" onclick="quickWrite(${r.addr})">Edit</button>
-      </div>`;
-    }).join('');
-  }catch(e){toast('Results error: '+e.message)}
+function scLoadResults(){
+  const pageSize=100;
+  const start=scPage_*pageSize;
+  const slice=scResults_.slice(start,start+pageSize);
+  const el=document.getElementById('sc-results');
+  document.getElementById('sc-pager').style.display=scResults_.length>pageSize?'flex':'none';
+  const pages=Math.ceil(scResults_.length/pageSize)||1;
+  document.getElementById('sc-page-lbl').textContent=`${scPage_+1} / ${pages}`;
+  if(!slice.length){el.innerHTML='<span style="color:#555;font-size:10px;padding:8px;display:block;text-align:center">No results.</span>';return}
+  const serial=state.meta.gameId.toUpperCase();
+  const knownDB=KNOWN_ADDRS[serial]||[];
+  el.innerHTML=slice.map(r=>{
+    const ka=knownDB.find(k=>k.addr===r.addr);
+    const valMatch=ka&&ka.min!=null&&r.val>=ka.min&&r.val<=ka.max;
+    const knownBadge=ka?`<span class="res-known" title="${esc(ka.hint||ka.label)}">${esc(ka.label)}</span>`:'';
+    const typeArg=ka?ka.type:'u32';
+    const safeLabel=ka?ka.label.replace(/['"\\]/g,''):'';
+    const checkBtn=valMatch
+      ?`<button class="res-chk" title="✓ Matches expected range for ${safeLabel} — click to confirm &amp; pin!" onclick="kaConfirmResult(${r.addr},${r.val},'${ka.id}','${safeLabel}','${typeArg}')">✓</button>`
+      :'';
+    return `<div class="res-item">
+      <span class="res-addr">0x${r.addr.toString(16).padStart(8,'0').toUpperCase()}</span>
+      ${knownBadge}
+      <span class="res-val">${r.val}</span>
+      ${checkBtn}
+      <button class="res-pin" onclick="openPinModal(${r.addr},${r.val})">Pin</button>
+      <button class="res-write" onclick="quickWrite(${r.addr})">Edit</button>
+    </div>`;
+  }).join('');
 }
 
 /* Quick write from results row */
