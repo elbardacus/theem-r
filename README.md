@@ -61,7 +61,7 @@ adb forward tcp:55356 tcp:55356
 
 Then in Theem-r's Scanner tab, set IP to `127.0.0.1`, port `55356`, and hit **Test**. The green dot means you're live.
 
-> **On-device shortcut:** If you open Theem-r directly in the browser on your Android device (not on a desktop), it auto-connects to `127.0.0.1:55356` on load — no ADB forwarding needed.
+> **Running on-device?** The bridge can run directly on your Android device via [Termux](https://f-droid.org/packages/com.termux/) (free terminal app). Install Python in Termux, set `DEVICE_IP = "127.0.0.1"` in `bridge.py`, run it, then open Theem-r in Chrome on the same device. No desktop or Wi-Fi needed — everything stays local.
 
 ### Scanning workflow
 

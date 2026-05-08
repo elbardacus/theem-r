@@ -290,9 +290,8 @@ button{cursor:pointer}
           </div>
           <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
           <div class="adb-hint">
-            <b style="color:#666">On device:</b> opens <code>127.0.0.1:55355</code> automatically.<br>
-            <b style="color:#666">From desktop:</b> requires the scanner bridge —
-            <span onclick="openBridgeModal()" style="color:#FF8C00;cursor:pointer;text-decoration:underline">what's that?</span>
+            Scanner requires the bridge script to be running —
+            <span onclick="openBridgeModal()" style="color:#FF8C00;cursor:pointer;text-decoration:underline">setup guide</span>
           </div>
         </div>
 
@@ -453,9 +452,11 @@ button{cursor:pointer}
     </div>
 
     <div class="bridge-note">
-      ✅ &nbsp;<b>Not needed on-device</b> — if you open Theem-r in a browser
-      directly on your Android device, it connects automatically. The bridge is
-      only needed when Theem-r is running on a desktop/laptop.
+      📱 &nbsp;<b>Running Theem-r on your Android device?</b><br>
+      The bridge can run on-device too via <a class="bridge-link" href="https://f-droid.org/packages/com.termux/" target="_blank">Termux</a>
+      (free terminal app). Install Python in Termux, set <code>DEVICE_IP = "127.0.0.1"</code>
+      in bridge.py, run it, then open Theem-r in Chrome on the same device.
+      No Wi-Fi or desktop needed — everything stays local.
     </div>
 
     <div class="bridge-h">Requirements</div>

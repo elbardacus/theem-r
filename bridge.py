@@ -46,9 +46,11 @@ from urllib.parse import urlparse, parse_qs                 # parse URL path + q
 HTTP_HOST    = "127.0.0.1"  # only accept connections from this machine (safe default)
 HTTP_PORT    = 55355         # must match the port field in Theem-r's Scanner tab
 
-DEVICE_IP    = "192.168.1.100"  # Wi-Fi IP of your Android device — find it in
-                                # Settings → About → Status → IP address.
-                                # UDP goes directly over LAN; no ADB tunnel needed.
+DEVICE_IP    = "192.168.1.100"  # WHERE IS YOUR EMULATOR RUNNING?
+                                #   Desktop use:  set to device's Wi-Fi IP
+                                #                 (Settings → About → Status → IP address)
+                                #   On-device:    set to "127.0.0.1"
+                                #                 (run this script in Termux on the same device)
 DEVICE_PORT  = 55355            # UDP port the emulator listens on (EmuLnk default)
 
 UDP_TIMEOUT  = 3.0           # seconds to wait for a UDP reply before giving up
