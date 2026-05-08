@@ -290,7 +290,7 @@ button{cursor:pointer}
           </div>
           <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
           <div class="adb-hint">
-            Scanner requires the bridge script to be running —
+            Scanner requires <b style="color:#666">Bridg-r</b> to be running —
             <span onclick="openBridgeModal()" style="color:#FF8C00;cursor:pointer;text-decoration:underline">setup guide</span>
           </div>
         </div>
@@ -439,57 +439,57 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- Bridge FAQ modal -->
+<!-- Bridg-r FAQ modal -->
 <div id="bridge-modal">
   <div class="bridge-box">
-    <div class="bridge-title">🔌 Scanner Bridge — FAQ</div>
+    <div class="bridge-title">🔌 Bridg-r — Scanner Setup</div>
 
     <div class="bridge-sub">
       The memory scanner talks to your emulator over HTTP, but EmuLnk emulators
       communicate over UDP — a protocol browsers can't speak directly.
-      The <b style="color:#eee">bridge script</b> sits in the middle: it accepts HTTP from
-      Theem-r and translates it to UDP for the emulator.
+      <b style="color:#eee">Bridg-r</b> sits in the middle: it accepts HTTP from
+      Theem-r and translates it to EMLKV2/UDP for the emulator.
+      <br><br>
+      <a class="bridge-link" href="https://github.com/elbardacus/bridg-r" target="_blank">↗ Bridg-r on GitHub</a>
     </div>
 
     <div class="bridge-note">
-      📱 &nbsp;<b>Running Theem-r on your Android device?</b><br>
-      The bridge can run on-device too via <a class="bridge-link" href="https://f-droid.org/packages/com.termux/" target="_blank">Termux</a>
-      (free terminal app). Install Python in Termux, set <code>DEVICE_IP = "127.0.0.1"</code>
-      in bridge.py, run it, then open Theem-r in Chrome on the same device.
+      📱 &nbsp;<b>Running Theem-r directly on your Android device?</b><br>
+      Run Bridg-r in <a class="bridge-link" href="https://f-droid.org/packages/com.termux/" target="_blank">Termux</a>
+      on the same device. Set <code>DEVICE_IP = "127.0.0.1"</code>
+      in bridgr.py, run it, then open Theem-r in Chrome on the same device.
       No Wi-Fi or desktop needed — everything stays local.
     </div>
 
     <div class="bridge-h">Requirements</div>
     <div class="bridge-sub">
-      Python 3.6+ — free, no extra packages needed.<br>
+      Python 3.10+ — free, no extra packages needed.<br>
       <a class="bridge-link" href="https://www.python.org/downloads/" target="_blank">↗ Download Python</a>
-      &nbsp;·&nbsp;
-      <a class="bridge-link" href="https://developer.android.com/tools/releases/platform-tools" target="_blank">↗ Download ADB (Platform Tools)</a>
     </div>
 
     <div class="bridge-h">Setup (one-time)</div>
     <div class="bridge-step">
       <span class="bridge-num">1</span>
-      <span>Find your <b style="color:#eee">device's Wi-Fi IP</b> — Settings → About → Status → IP address (e.g. <code style="color:#4DFF91">192.168.1.50</code>). Make sure your PC and device are on the same Wi-Fi network.</span>
+      <span>Find your <b style="color:#eee">device's Wi-Fi IP</b> — Android Settings → About phone → Status → IP address (e.g. <code style="color:#4DFF91">192.168.1.50</code>). Your PC and device must be on the same Wi-Fi network.</span>
     </div>
     <div class="bridge-step">
       <span class="bridge-num">2</span>
-      <span>Download <b style="color:#eee">bridge.py</b>, open it in a text editor, and set <code style="color:#4DFF91">DEVICE_IP</code> to your device's IP:</span>
+      <span>Download <b style="color:#eee">bridgr.py</b>, open it in a text editor, and set <code style="color:#4DFF91">DEVICE_IP</code> to your device's IP:</span>
     </div>
     <div class="bridge-code" style="font-size:10px">
       DEVICE_IP = "192.168.1.50"
       <span class="bridge-copy" onclick="copyCmd('DEVICE_IP = \"192.168.1.50\"',this)">Copy</span>
     </div>
     <div style="font-size:10px;color:#555;margin-top:-6px">
-      <a class="bridge-link" href="https://raw.githubusercontent.com/elbardacus/theem-r/main/bridge.py" target="_blank">↗ Download bridge.py</a>
+      <a class="bridge-link" href="https://raw.githubusercontent.com/elbardacus/bridg-r/master/bridgr.py" target="_blank">↗ Download bridgr.py</a>
     </div>
     <div class="bridge-step">
       <span class="bridge-num">3</span>
-      <span>Run the bridge on your desktop (keep this window open):</span>
+      <span>Run Bridg-r on your desktop — keep this window open while scanning:</span>
     </div>
     <div class="bridge-code">
-      python bridge.py
-      <span class="bridge-copy" onclick="copyCmd('python bridge.py',this)">Copy</span>
+      python bridgr.py
+      <span class="bridge-copy" onclick="copyCmd('python bridgr.py',this)">Copy</span>
     </div>
 
     <div class="bridge-h">Connect in Theem-r</div>
@@ -498,10 +498,11 @@ button{cursor:pointer}
       <span>Set IP to <code style="color:#4DFF91">127.0.0.1</code>, port <code style="color:#4DFF91">55355</code>, then click <b style="color:#eee">Test</b> — green dot means live.</span>
     </div>
 
-    <div class="bridge-warn">
-      ⚠️ &nbsp;<b>Work in progress</b> — the bridge script's UDP layer is stubbed pending
-      confirmation of the full EMLKV2 packet format from the EmuLnk developer.
-      Game ID auto-detection and live scanning will complete once the spec is confirmed.
+    <div class="bridge-note">
+      💡 &nbsp;<b>Emulator developer?</b> The <b style="color:#eee">Bridg-r Emulator SDK</b> lets you embed
+      the HTTP API directly in your fork — no script needed for users.
+      Drop-in C++ with copy-paste examples for Dolphin-Lnk, PPSSPP-Lnk, melonDS-Lnk, and more.<br>
+      <a class="bridge-link" href="https://github.com/elbardacus/bridg-r/tree/master/emulator-sdk" target="_blank">↗ Emulator SDK on GitHub</a>
     </div>
 
     <button class="bridge-close" onclick="closeBridgeModal()">Close</button>
