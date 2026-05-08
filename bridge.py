@@ -47,7 +47,7 @@ HTTP_HOST    = "127.0.0.1"  # only accept connections from this machine (safe de
 HTTP_PORT    = 55356         # must match the port field in Theem-r's Scanner tab
 
 DEVICE_IP    = "127.0.0.1"  # device IP after 'adb forward' — or LAN IP for Wi-Fi
-DEVICE_PORT  = 55356         # UDP port the emulator listens on
+DEVICE_PORT  = 55355         # UDP port the emulator listens on
                              # Note: confirm in your emulator's EmuLnk/Network settings
 
 UDP_TIMEOUT  = 3.0           # seconds to wait for a UDP reply before giving up
@@ -574,7 +574,7 @@ def main():
     print(f'  Emulator target    udp://{DEVICE_IP}:{DEVICE_PORT}')
     print()
     print('  Before starting Theem-r:')
-    print('    adb forward tcp:55356 tcp:55356')
+    print(f'    adb forward tcp:{HTTP_PORT} tcp:{DEVICE_PORT}')
     print()
     print('  In Theem-r Scanner tab:')
     print('    IP = 127.0.0.1   Port = 55356   → Test')
