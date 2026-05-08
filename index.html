@@ -1756,18 +1756,25 @@ async function scConnect(){
   try {
     const d=await scFetch('/data');
     dot.className='conn-dot ok';
-    const gameLabel=d.serial||'no game loaded';
+    const serial=d.game_id||d.serial||'';  // game_id = Bridgr SDK; serial = legacy Python bridge
+    const platform=d.platform||'';         // 'GCN' | 'Wii' from Bridgr SDK
+    const gameLabel=serial||'no game loaded';
     st.textContent='Connected — '+gameLabel;
     scConnected=true;
+    // auto-select console from platform if not already set
+    if(platform && CONSOLE_MAP[platform] && !state.meta.console){
+      document.getElementById('m-con').value=platform;
+      onConsoleChange(platform);
+    }
     // auto-fill game ID if not set
-    if(d.serial && !state.meta.gameId){
-      document.getElementById('m-gameid').value=d.serial;
-      onGameId(d.serial);  // this calls renderKnownAddrs + kaReadAll
+    if(serial && !state.meta.gameId){
+      document.getElementById('m-gameid').value=serial;
+      onGameId(serial);  // this calls renderKnownAddrs + kaReadAll
     } else {
-      renderKnownAddrs((d.serial||state.meta.gameId||'').toUpperCase());
+      renderKnownAddrs((serial||state.meta.gameId||'').toUpperCase());
       setTimeout(kaReadAll,100);
     }
-    toast('Scanner connected' + (d.serial?' — '+d.serial:''));
+    toast('Scanner connected' + (serial?' — '+serial:''));
   } catch(e){
     dot.className='conn-dot err'; st.textContent='Failed: '+e.message; scConnected=false;
   }
