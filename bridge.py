@@ -44,11 +44,12 @@ from urllib.parse import urlparse, parse_qs                 # parse URL path + q
 # ── Configuration ─────────────────────────────────────────────────────────────
 
 HTTP_HOST    = "127.0.0.1"  # only accept connections from this machine (safe default)
-HTTP_PORT    = 55356         # must match the port field in Theem-r's Scanner tab
+HTTP_PORT    = 55355         # must match the port field in Theem-r's Scanner tab
 
-DEVICE_IP    = "127.0.0.1"  # device IP after 'adb forward' — or LAN IP for Wi-Fi
-DEVICE_PORT  = 55355         # UDP port the emulator listens on
-                             # Note: confirm in your emulator's EmuLnk/Network settings
+DEVICE_IP    = "192.168.1.100"  # Wi-Fi IP of your Android device — find it in
+                                # Settings → About → Status → IP address.
+                                # UDP goes directly over LAN; no ADB tunnel needed.
+DEVICE_PORT  = 55355            # UDP port the emulator listens on (EmuLnk default)
 
 UDP_TIMEOUT  = 3.0           # seconds to wait for a UDP reply before giving up
 
@@ -573,11 +574,11 @@ def main():
     print(f'  HTTP listening on  http://{HTTP_HOST}:{HTTP_PORT}')
     print(f'  Emulator target    udp://{DEVICE_IP}:{DEVICE_PORT}')
     print()
-    print('  Before starting Theem-r:')
-    print(f'    adb forward tcp:{HTTP_PORT} tcp:{DEVICE_PORT}')
+    print(f'  Edit DEVICE_IP in bridge.py to your device\'s Wi-Fi IP.')
+    print(f'  (Settings → About → Status → IP address)')
     print()
     print('  In Theem-r Scanner tab:')
-    print('    IP = 127.0.0.1   Port = 55356   → Test')
+    print(f'    IP = 127.0.0.1   Port = {HTTP_PORT}   → Test')
     print()
     print('  Press Ctrl+C to stop.')
     print()

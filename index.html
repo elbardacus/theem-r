@@ -285,12 +285,12 @@ button{cursor:pointer}
           <div class="side-ttl" style="margin-bottom:6px">Emulator Connection</div>
           <div class="conn-row">
             <input class="conn-ip" id="sc-ip" value="192.168.1.100" placeholder="device IP">
-            <input class="conn-port" id="sc-port" value="55356" placeholder="port">
+            <input class="conn-port" id="sc-port" value="55355" placeholder="port">
             <button class="conn-btn" onclick="scConnect()">Test</button>
           </div>
           <div class="conn-status"><div class="conn-dot" id="sc-dot"></div><span id="sc-status">Not connected</span></div>
           <div class="adb-hint">
-            <b style="color:#666">On device:</b> opens <code>127.0.0.1:55356</code> automatically.<br>
+            <b style="color:#666">On device:</b> opens <code>127.0.0.1:55355</code> automatically.<br>
             <b style="color:#666">From desktop:</b> requires the scanner bridge —
             <span onclick="openBridgeModal()" style="color:#FF8C00;cursor:pointer;text-decoration:underline">what's that?</span>
           </div>
@@ -469,33 +469,32 @@ button{cursor:pointer}
     <div class="bridge-h">Setup (one-time)</div>
     <div class="bridge-step">
       <span class="bridge-num">1</span>
-      <span>Enable <b style="color:#eee">USB Debugging</b> on your Android device
-      (Settings → About → tap Build Number 7× → Developer Options → USB Debugging)</span>
+      <span>Find your <b style="color:#eee">device's Wi-Fi IP</b> — Settings → About → Status → IP address (e.g. <code style="color:#4DFF91">192.168.1.50</code>). Make sure your PC and device are on the same Wi-Fi network.</span>
     </div>
     <div class="bridge-step">
       <span class="bridge-num">2</span>
-      <span>Plug device in via USB, then run this command on your desktop:</span>
+      <span>Download <b style="color:#eee">bridge.py</b>, open it in a text editor, and set <code style="color:#4DFF91">DEVICE_IP</code> to your device's IP:</span>
     </div>
-    <div class="bridge-code">
-      adb forward tcp:55356 tcp:55356
-      <span class="bridge-copy" onclick="copyCmd('adb forward tcp:55356 tcp:55356',this)">Copy</span>
+    <div class="bridge-code" style="font-size:10px">
+      DEVICE_IP = "192.168.1.50"
+      <span class="bridge-copy" onclick="copyCmd('DEVICE_IP = \"192.168.1.50\"',this)">Copy</span>
+    </div>
+    <div style="font-size:10px;color:#555;margin-top:-6px">
+      <a class="bridge-link" href="https://raw.githubusercontent.com/elbardacus/theem-r/main/bridge.py" target="_blank">↗ Download bridge.py</a>
     </div>
     <div class="bridge-step">
       <span class="bridge-num">3</span>
-      <span>Download <b style="color:#eee">bridge.py</b> from the Theem-r repo and run it:</span>
+      <span>Run the bridge on your desktop (keep this window open):</span>
     </div>
     <div class="bridge-code">
       python bridge.py
       <span class="bridge-copy" onclick="copyCmd('python bridge.py',this)">Copy</span>
     </div>
-    <div style="font-size:10px;color:#555;margin-top:-6px">
-      <a class="bridge-link" href="https://raw.githubusercontent.com/elbardacus/theem-r/main/bridge.py" target="_blank">↗ Download bridge.py</a>
-    </div>
 
     <div class="bridge-h">Connect in Theem-r</div>
     <div class="bridge-step">
       <span class="bridge-num">4</span>
-      <span>Set IP to <code style="color:#4DFF91">127.0.0.1</code>, port <code style="color:#4DFF91">55356</code>, then click <b style="color:#eee">Test</b> — green dot means live.</span>
+      <span>Set IP to <code style="color:#4DFF91">127.0.0.1</code>, port <code style="color:#4DFF91">55355</code>, then click <b style="color:#eee">Test</b> — green dot means live.</span>
     </div>
 
     <div class="bridge-warn">
@@ -1779,7 +1778,7 @@ async function tryLocalConnect(){
   // Only try if IP is still the default placeholder
   if(ipEl.value!=='192.168.1.100') return;
   try{
-    const r=await fetch('http://127.0.0.1:55356/data',{signal:AbortSignal.timeout(800)});
+    const r=await fetch('http://127.0.0.1:55355/data',{signal:AbortSignal.timeout(800)});
     if(r.ok){
       ipEl.value='127.0.0.1';
       const dot=document.getElementById('sc-dot'),st=document.getElementById('sc-status');
